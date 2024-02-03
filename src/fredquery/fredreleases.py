@@ -1,0 +1,297 @@
+#! env python
+
+# return information on releases or their sries
+#
+
+import os
+import sys
+import argparse
+import re
+import time
+import urllib.request
+import xml
+from xml.etree import ElementTree as ET
+
+class FREDreleases():
+
+    def __init__(self):
+        # fred releases
+        self.rurl = 'https://api.stlouisfed.org/fred/releases'
+        self.releasedict = {}
+        # fred release tables
+        self.rturl = 'https://api.stlouisfed.org/fred/release/tables'
+        self.releasetabledict = {}
+        # series for a release id
+        self.rsurl = 'https://api.stlouisfed.org/fred/release/series'
+        self.seriesdict = {}
+        self.surl = 'https://api.stlouisfed.org/fred/series'
+        # observations for a series id
+        self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
+        # url for getting a FRED api_key
+        self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
+        # probably a bad idea to put your real api_key in a report
+        self.rapi_key = 'YOURAPIKEYGOESHERE'
+        if 'FREDKEY' in os.environ:
+            self.api_key = os.environ['FREDKEY']
+        else:
+            print('FRED api_key required: %s' % (self.kurl), file=sys.stderr)
+            sys.exit()
+        self.npages  = 7
+        self.rid     = None
+        self.sid     = None
+
+    def query(self, url=None):
+        """query - query an url
+         url  - required
+        """
+        try:
+            req = urllib.request.Request(url)
+            resp = urllib.request.urlopen(req)
+            return resp
+        except urllib.error.URLError as e:
+            print("Error %s(%s): %s" % ('query', url, e.reason),
+                  file=sys.stderr),
+            sys.exit(1)
+
+    def reportseries(self, ofp):
+        """ reportseries - report all series collected
+            ofp - file pointer to which to write
+        """
+        if not ofp: ofp=sys.stdout
+        ha = []
+        for id in self.seriesdict:
+            ka = self.seriesdict[id].keys()
+            if len(ha) == 0:
+                for f in ka:
+                    ha.append("'%s'," % (f) )
+                print(''.join(ha), file=ofp)
+            ra=[]
+            for k in ka:
+                ra.append("'%s'," % (self.seriesdict[id][k]) )
+            print(''.join(ra), file=ofp)
+
+    def getseriesdata(self, rstr):
+        """ getseriesdata - collect the data for a series
+            rstr - response string for the api query
+        """
+        xroot = ET.fromstring(rstr)
+        for child in xroot:
+            id = child.attrib['id']
+            ka = child.attrib.keys()
+            self.seriesdict[id] = {}
+            for k in ka:
+                self.seriesdict[id][k] = child.attrib[k]
+            self.seriesdict[id]['url'] =\
+              '%s?series_id=%s&api_key=%s' % (self.sourl, id, self.rapi_key)
+
+    def getseriesforsid(self, sid):
+        """ getseriesforsid - get a series for a series_id
+            sid - series_id - required
+        """
+        if not sid:
+            print('getseriesforsid: sid required', file=stderr)
+            sys.exit(1)
+        url = '%s?series_id=%s&api_key=%s' % (self.surl, sid,
+                                              self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getseriesdata(rstr)
+
+    def getseriesforrid(self, rid):
+        """ getseriesforrid - get all series for a release_id
+            rid - release_id - required
+        """
+        if not rid:
+            print('getseriesforrid: rid required', file=stderr)
+            sys.exit(1)
+        url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
+                                           rid, self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getseriesdata(rstr)
+
+    def getseries(self):
+        """ getseries - get all series for all releases collected
+        """
+        print("'rid','rname','sid','stitle','units','notes'",file=ofp)
+        # a series is associated with a release
+        for k in self.releasedict.keys():
+            nurl = '%s?release_id=%s' % (self.rsurl, rid)
+            if nurl not in self.seriesdict:
+                url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
+                                               k, self.api_key)
+                resp = self.query(url)
+                rstr = resp.read().decode('utf-8')
+                self.getseriesdata(rstr)
+                # trying to avoid dups
+                self.seriesdict[nurl] = 1
+                time.sleep(60)
+
+    # nested organization - csv representation doesn't make sense
+    # def reportreleasetables(self, ofp):
+
+    # XXX finish me
+    def getreleasetabledata(self, rstr):
+        """ getreleasetabledata - collect data for a release table
+            rstr - response string for the api query
+        """
+        xroot = ET.fromstring(rstr)
+        rid = None
+        nm  = None
+        for child in xroot:
+            sid = None
+            eid = None
+            if child.tag == 'release_id':
+                rid = child.text
+                self.releasetabledict[rid]={}
+                continue
+            elif child.tag == 'name':
+                self.releasetabledict[rid]['name']=child.text
+                continue
+            elif child.tag == 'element_id':
+                self.releasetabledict[rid]['element_id']=child.text
+                continue
+            elif child.tag == 'element':
+                self.releasetabledict[rid]['elements']=[]
+                elementdict={}
+                for gchild in child:
+                    if gchild.tag == 'children':
+                        elementdict['children'] = []
+                        childdict = {}
+                        for ggchild in gchild:
+                            if ggchild.text != None:
+                                childdict[gchild.tag] = ggchild.text
+                                continue
+                        elementdict['children'].append(childdict)
+                    elif gchild.text != None:
+                        elementdict[gchild.tag] = gchild.text
+                        continue
+                self.releasetabledict[rid]['elements'].append(elementdict)
+            else:
+                if rid and nm: self.releasetabledict[rid]['name'] = nm
+                if rid and eid: self.releasetabledict[rid]['element_id'] = eid
+
+    def getreleasetable(self, rid):
+        """ getreleasetable - get a release table fir a release_id
+            rid - release_id - required
+        """
+        if not rid:
+            print('getseriesforrid: rid required', file=stderr)
+            sys.exit(1)
+        url = '%s?release_id=%s&api_key=%s' % (self.rturl, rid, self.api_key)
+        resp=self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getreleasetabledata(rstr)
+
+    def getreleasetables(self):
+        """ getreleasetables - get release tables for all releases collected
+        """
+        for rid in self.releasedict.keys():
+            self.getreleasetable(rid)
+
+    def reportreleases(self, ofp):
+        """reportreleases - report data on all Dreleases collected
+           ofp - file pointer to which to write
+        """
+        if not ofp: ofp=sys.stdout
+        ha = []
+        for id in self.releasedict.keys():
+            ka =  self.releasedict[id].keys()
+            # header
+            if len(ha) == 0:
+                for k in ka:
+                    ha.append("'%s'," % k)
+                print(''.join(ha), file=ofp)
+            # record
+            ra    = []
+            for k in ka:
+                ra.append("'%s'," % self.releasedict[id][k])
+            print(''.join(ra), file=ofp)
+
+    def getreleasedata(self, rstr):
+        """ getreleasedata - collect data on a FRED release
+            rstr - response string for the api query
+        """
+        xroot = ET.fromstring(rstr)
+        for child in xroot:
+            id = child.attrib['id']
+            ka = child.attrib.keys()
+            self.releasedict[id] = {}
+            url = '%s?release_id=%s&api_key=%s' % (self.rurl, id, self.rapi_key)
+            for k in ka:
+                self.releasedict[id][k] = child.attrib[k]
+            self.releasedict[id]['url'] = url
+            if 'link' not in ka: self.releasedict[id]['link'] = ''
+
+    def getreleases(self):
+        """ getreleases - collect all releases
+        """
+        url = '%s?api_key=%s' % (self.rurl, self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        #  print(rstr)
+        self.getreleasedata(rstr)
+
+def main():
+    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED releases and/or their time series')
+    argp.add_argument('--releases', action='store_true', default=False,
+       help='return releases')
+    argp.add_argument('--releasesandseries', action='store_true', default=False,
+       help='return all series for all releases - not recommended')
+    argp.add_argument('--series', action='store_true', default=False,
+       help='return series by series_id or by release_id')
+
+    argp.add_argument('--releaseid', required=False,
+       help='a release_id identifies a FRED release')
+    argp.add_argument('--seriesid', required=False,
+       help='a series_id identifies a FRED series')
+
+    argp.add_argument('--file', required=False,
+       help='save the output to the file specified')
+    args=argp.parse_args()
+
+    if not args.releases and not args.series and not args.releasesandseries:
+        argp.print_help()
+        sys.exit(1)
+
+    fp = sys.stdout
+    if args.file:
+        try:
+            fp = open(args.file, 'w')
+        except Exception as e:
+            print('%s: %s' % (args.file, e), file=sys.stderr )
+            sys.exit(1)
+    fr = FREDreleases()
+    if args.series and args.releaseid:
+        fr.getseriesforrid(rid=args.releaseid)
+        fr.reportseries(ofp=fp)
+    elif args.series and rgs.seriesid:
+        fr.getseriesforsid(sid=args.seriesid)
+        fr.reportseries(ofp=fp)
+    elif args.releases:
+        fr.getreleases()
+        fr.reportreleases(ofp=fp)
+    elif args.releasesandseries:
+        while True:
+            try:
+                ans = input("Are you sure that you want to retrieve all series for all releases? It will pull enormous amounts of data and will possibly exceed the rate limit (yN): ")
+            except ValueError:
+                print("Sorry, I didn't understand that.")
+                # No valid input will restart loop.
+                continue
+            else:
+                break
+
+        if isinstance(ans, str):
+            if ans == 'y':
+                fr.getreleases()
+                fr.getseries()
+                fr.reportseries(ofp=fp)
+            else:
+                print("Good choice.")
+                sys.exit(0)
+        else:
+            print("Good choice.")
+            sys.exit(0)
+
+main()
