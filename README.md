@@ -12,8 +12,8 @@ environmental variable.
 </p〉
 
 
-## Usage]
-`
+## [Usage]
+
 ### FREDcategories
 <P>
 usage: fredcategories.py [-h] [--series] [--file FILE]<br>
