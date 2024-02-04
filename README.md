@@ -36,8 +36,7 @@ options:<br>
 &nbsp&nbsp  --releases            return releases<br>
 &nbsp&nbsp  --releasesandseries   return all series for all releases - not recommended<br>
 &nbsp&nbsp  --series              return series by series_id or by release_id<br>
-&nbsp&nbsp  --releaseid RELEASEID<br>
-&nbsp&nbsp                        a release_id identifies a FRED release<br>
+&nbsp&nbsp  --releaseid RELEASEID a release_id identifies a FRED release<br>
 &nbsp&nbsp  --seriesid SERIESID   a series_id identifies a FRED series<br>
 &nbsp&nbsp  --file FILE           save the output to the file specified<br>
 </p>
