@@ -12,8 +12,9 @@ environmental variable.
 </p〉
 
 
--[Usage]
+## Usage]
 `
+### FREDcategories
 <P>
 usage: fredcategories.py [-h] [--series] [--file FILE]<br>
 collect and report stlouisfed.org FRED categories and/or series<br>
@@ -24,6 +25,7 @@ options:<br>
 </p>
 
 
+### FREDreleases
 <P>
 usage: fredreleases.py [-h] [--releases] [--releasesandseries] [--series]<br>
                        [--releaseid RELEASEID] [--seriesid SERIESID]<br>
@@ -41,6 +43,7 @@ options:<br>
 </p>
 
 
+### FREDtags
 <P>
 usage: fredtags.py [-h] [--tags] [--tagsandseries] [--series]<br>
                    [--tagname TAGNAME] [--seriesid SERIESID] [--file FILE]<br>
