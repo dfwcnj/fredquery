@@ -1,14 +1,19 @@
 
+# FREDquery
+#
 -[Usage]
 `
+<P>
 usage: fredcategories.py [-h] [--series] [--file FILE]
 collect and report stlouisfed.org FRED categories and/or series
 options:
   -h, --help   show this help message and exit
   --series     report series urls for categories
   --file FILE  store the output in this file
+</p>
 
 
+<P>
 usage: fredreleases.py [-h] [--releases] [--releasesandseries] [--series]
                        [--releaseid RELEASEID] [--seriesid SERIESID]
                        [--file FILE]
@@ -22,8 +27,10 @@ options:
                         a release_id identifies a FRED release
   --seriesid SERIESID   a series_id identifies a FRED series
   --file FILE           save the output to the file specified
+</p>
 
 
+<P>
 usage: fredtags.py [-h] [--tags] [--tagsandseries] [--series]
                    [--tagname TAGNAME] [--seriesid SERIESID] [--file FILE]
 collect and report stlouisfed.org FRED tags and/or their series
@@ -35,5 +42,6 @@ options:
   --tagname TAGNAME    tag_id identifies a FRED tag
   --seriesid SERIESID  series_id - identifies a series
   --file FILE          save the output to the file specified
+</p>
 
 
