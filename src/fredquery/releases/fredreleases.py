@@ -39,6 +39,7 @@ class FREDreleases():
         self.npages  = 7
         self.rid     = None
         self.sid     = None
+        self.observationsdict = {}
 
     def query(self, url=None):
         """query - query an url
@@ -52,6 +53,66 @@ class FREDreleases():
             print("Error %s(%s): %s" % ('query', url, e.reason),
                   file=sys.stderr),
             sys.exit(1)
+
+    def reportobservations(self, odir):
+        """
+        reportobservations - report category timeseries
+        rstr - decoded response of a urllib request
+        """
+        if not odir:
+            print('no output directory provided', file=sys.stderr)
+            sys.exit(0)
+        for sid in self.observationsdict.keys():
+            sfn=os.path.join('%s/%s_%s.csv' % (odir,
+                    sid, self.seriesdict[sid]['units']) )
+            fn = ''.join(sfn.split() )
+            with open(fn, 'w') as fp:
+                ha=[]
+                for obs in self.observationsdict[sid]:
+                    ka=obs.keys()
+                    if len(ha) == 0:
+                        for f in ka:
+                            if f == 'value':
+                                sv = '%s_%s' % (sid,
+                                      self.seriesdict[sid]['units'])
+                                ha.append("'%s'" % ''.join(sv.split()) )
+                            else:
+                                ha.append("'%s'" % f)
+                        print(''.join(ha), file=fp )
+                    ra = []
+                    for rk in obs.keys():
+                        ra.append("'%s'," % (obs[rk]) )
+                    print(''.join(ra), file=fp )
+
+
+    def getseriesobservationdata(self, sid, rstr):
+        """
+        getseriesobservationdata - parse the observation xml
+        rstr - decoded response of a urllib request
+        """
+        xroot = ET.fromstring(rstr)
+        self.observationsdict[sid]=[]
+        for child in xroot:
+            adict = child.attrib
+            #print(child.tag, child.attrib, file=sys.stderr)
+            ka = adict.keys()
+            obs={}
+            for k in ka:
+                obs[k] = adict[k]
+            self.observationsdict[sid].append(obs)
+
+    def getobservations(self):
+        """
+        getobservations - time series data for all series collected
+        """
+        for sid in self.seriesdict:
+            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+                   self.api_key)
+            resp = self.query(url)
+            rstr = resp.read().decode('utf-8')
+            # observation data doesn't identify itself
+            self.getseriesobservationdata(sid, rstr)
+            time.sleep(1)
 
     def reportseries(self, ofp):
         """ reportseries - report all series collected
@@ -113,7 +174,6 @@ class FREDreleases():
     def getseries(self):
         """ getseries - get all series for all releases collected
         """
-        print("'rid','rname','sid','stitle','units','notes'",file=ofp)
         # a series is associated with a release
         for k in self.releasedict.keys():
             nurl = '%s?release_id=%s' % (self.rsurl, rid)
@@ -125,11 +185,12 @@ class FREDreleases():
                 self.getseriesdata(rstr)
                 # trying to avoid dups
                 self.seriesdict[nurl] = 1
-                time.sleep(60)
+                time.sleep(1)
 
-    # nested organization - csv representation doesn't make sense
+    # XXX nested organization - csv representation doesn't make sense
     # def reportreleasetables(self, ofp):
 
+    # XXX nested organization - csv representation doesn't make sense
     # XXX finish me
     def getreleasetabledata(self, rstr):
         """ getreleasetabledata - collect data for a release table
@@ -234,64 +295,73 @@ class FREDreleases():
 
 def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED releases and/or their time series')
+
     argp.add_argument('--releases', action='store_true', default=False,
        help='return releases')
-    argp.add_argument('--releasesandseries', action='store_true', default=False,
-       help='return all series for all releases - not recommended')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series by series_id or by release_id')
+    argp.add_argument('--observations', action='store_true', default=False,
+       help='return timeseries for all series collected')
 
     argp.add_argument('--releaseid', required=False,
        help='a release_id identifies a FRED release')
     argp.add_argument('--seriesid', required=False,
        help='a series_id identifies a FRED series')
 
-    argp.add_argument('--file', required=False,
-       help='save the output to the file specified')
+    argp.add_argument('--file', help="path to an output filename\n\
+            if just a filename and--directory is not provided\
+            the file is created in the current directory")
+    argp.add_argument('--directory',
+                    help="directory to write the output, if --observations\
+                         filenames are autogenerated")
+
     args=argp.parse_args()
 
-    if not args.releases and not args.series and not args.releasesandseries:
+    if not args.releases and not args.series and not args.observations:
         argp.print_help()
         sys.exit(1)
 
+    ofn=None
     fp = sys.stdout
-    if args.file:
-        try:
-            fp = open(args.file, 'w')
-        except Exception as e:
-            print('%s: %s' % (args.file, e), file=sys.stderr )
-            sys.exit(1)
+
+    if not args.observations:
+        if not args.directory and args.file:
+            ofn = args.file
+        elif args.directory and args.file:
+            if '/' in args.file:
+                argp.print_help()
+                sys.exit()
+            ofn = os.path.join(args.directory, args.file)
+        if ofn:
+            try:
+                fp = open(ofn, 'w')
+            except Exception as e:
+                print('%s: %s' % (ofn, e) )
+                sys.exit()
+
     fr = FREDreleases()
-    if args.series and args.releaseid:
+
+    if args.observations:
+        if not args.directory:
+            argp.print_help()
+            sys.exit()
+        if args.releaseid:
+            fr.getseriesforrid(args.releaseid)
+            fr.getobservations()
+            fr.reportobservations(odir=args.directory)
+        else:
+            fr.getreleases()
+            fr.getseries()
+            fr.getobservations()
+            fr.reportobservations(odir=args.directory)
+    elif args.series and args.releaseid:
         fr.getseriesforrid(rid=args.releaseid)
         fr.reportseries(ofp=fp)
-    elif args.series and rgs.seriesid:
+    elif args.series and args.seriesid:
         fr.getseriesforsid(sid=args.seriesid)
         fr.reportseries(ofp=fp)
     elif args.releases:
         fr.getreleases()
         fr.reportreleases(ofp=fp)
-    elif args.releasesandseries:
-        while True:
-            try:
-                ans = input("Are you sure that you want to retrieve all series for all releases? It will pull enormous amounts of data and will possibly exceed the rate limit (yN): ")
-            except ValueError:
-                print("Sorry, I didn't understand that.")
-                # No valid input will restart loop.
-                continue
-            else:
-                break
-
-        if isinstance(ans, str):
-            if ans == 'y':
-                fr.getreleases()
-                fr.getseries()
-                fr.reportseries(ofp=fp)
-            else:
-                print("Good choice.")
-                sys.exit(0)
-        else:
-            print("Good choice.")
-            sys.exit(0)
 
 main()

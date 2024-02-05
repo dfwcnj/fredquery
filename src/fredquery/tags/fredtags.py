@@ -10,6 +10,7 @@ import sys
 import argparse
 import re
 import urllib.request
+import time
 import xml
 from xml.etree import ElementTree as ET
 
@@ -18,7 +19,7 @@ class FREDtags():
         self.turl = 'https://api.stlouisfed.org/fred/tags'
         self.tsurl = '%s/series' % self.turl
         self.surl = 'https://api.stlouisfed.org/fred/series'
-        self.sourl = '%s/series/observations' % self.surl
+        self.sourl = '%s/observations' % self.surl
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.npages = 30
         self.tagdict = {}
@@ -29,6 +30,9 @@ class FREDtags():
         else:
             print('FRED api_key required: %s' % (self.kurl), file=sys.stderr)
             sys.exit()
+        self.tid     = None
+        self.sid     = None
+        self.observationsdict = {}
 
     def query(self, url=None):
         """query - query an url
@@ -43,7 +47,66 @@ class FREDtags():
                   file=sys.stderr),
             sys.exit(1)
 
-    # XXX add output file param and print to that
+    def reportobservations(self, odir):
+        """
+        reportobservations - report category timeseries
+        rstr - decoded response of a urllib request
+        """
+        if not odir:
+            print('no output directory provided', file=sys.stderr)
+            sys.exit(0)
+        for sid in self.observationsdict.keys():
+            sfn=os.path.join('%s/%s_%s.csv' % (odir,
+                    sid, self.seriesdict[sid]['units']) )
+            fn = ''.join(sfn.split() )
+            with open(fn, 'w') as fp:
+                ha=[]
+                for obs in self.observationsdict[sid]:
+                    ka=obs.keys()
+                    if len(ha) == 0:
+                        for f in ka:
+                            if f == 'value':
+                                sv = '%s_%s' % (sid,
+                                      self.seriesdict[sid]['units'])
+                                ha.append("'%s'" % ''.join(sv.split()) )
+                            else:
+                                ha.append("'%s'" % f)
+                        print(''.join(ha), file=fp )
+                    ra = []
+                    for rk in obs.keys():
+                        ra.append("'%s'," % (obs[rk]) )
+                    print(''.join(ra), file=fp )
+
+
+    def getseriesobservationdata(self, sid, rstr):
+        """
+        getseriesobservationdata - parse the observation xml
+        rstr - decoded response of a urllib request
+        """
+        xroot = ET.fromstring(rstr)
+        self.observationsdict[sid]=[]
+        for child in xroot:
+            adict = child.attrib
+            #print(child.tag, child.attrib, file=sys.stderr)
+            ka = adict.keys()
+            obs={}
+            for k in ka:
+                obs[k] = adict[k]
+            self.observationsdict[sid].append(obs)
+
+    def getobservations(self):
+        """
+        getobservations - time series data for all series collected
+        """
+        for sid in self.seriesdict:
+            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+                   self.api_key)
+            resp = self.query(url)
+            rstr = resp.read().decode('utf-8')
+            # observation data doesn't identify itself
+            self.getseriesobservationdata(sid, rstr)
+            time.sleep(1)
+
     def reportseries(self, ofp):
         """ reportseries - report series for all collected
         """
@@ -93,6 +156,18 @@ class FREDtags():
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(k, rstr)
 
+    def getseriesfortnm(self, tnm):
+        """ getseriesfortnm get series for a tag_id
+            tnm - tag_name - required
+        """
+        if not tnm:
+            print('getseriesfromtnm: tnm required', file=sys.stderr)
+            sys.exit(1)
+        url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, tnm, self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getseriesdata(rstr)
+
     def getseries(self):
         """ getseries get series for all tags collected
         """
@@ -106,6 +181,7 @@ class FREDtags():
             resp = self.query(url)
             rstr = resp.read().decode('utf-8')
             self.getseriesdata(k, rstr)
+            time.sleep(1)
 
     def reporttags(self, ofp):
         """ reporttags - report for all tags collected
@@ -135,18 +211,6 @@ class FREDtags():
             for k in child.attrib.keys():
                 self.tagdict[nm][k] = child.attrib[k]
 
-    def getseriesfortnm(self, tnm):
-        """ getseriesfortnm get series for a tag_id
-            tnm - tag_name - required
-        """
-        if not tnm:
-            print('getseriesfromtnm: tnm required', file=sys.stderr)
-            sys.exit(1)
-        url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, tnm, self.api_key)
-        resp = self.query(url)
-        rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
-
     def gettags(self):
         url = '%s?api_key=%s' % (self.turl, self.api_key)
         resp = self.query(url)
@@ -158,63 +222,69 @@ def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED tags and/or their series')
     argp.add_argument('--tags', action='store_true', default=False,
        help='return tags')
-    argp.add_argument('--tagsandseries', action='store_true', default=False,
-       help='return all series for all tags - not recommended')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series for a tag_id or for a series_id')
+    argp.add_argument('--observations', action='store_true', default=False,
+                       help="report timeseries data for tags")
 
     argp.add_argument('--tagname', required=False,
        help='tag_id identifies a FRED tag')
     argp.add_argument('--seriesid', required=False,
        help='series_id - identifies a series')
 
-    argp.add_argument('--file', required=False,
-       help='save the output to the file specified')
+    argp.add_argument('--file', help="path to an output filename\n\
+            if just a filename and--directory is not provided\
+            the file is created in the current directory")
+    argp.add_argument('--directory', required=False,
+       help='save the output to the directory specified')
+
     args=argp.parse_args()
 
-    if not args.tags and not args.series and not args.tagsandseries:
+    if not args.tags and not args.series and not args.observations:
         argp.print_help()
         sys.exit(1)
 
-    fp = sys.stdout
-    if args.file:
-        try:
-            fp = open(args.file, 'w')
-        except Exception as e:
-            print('%s: %s' % (args.file, e), file=sys.stderr )
-            sys.exit(1)
-    fr = FREDtags()
-    if args.series and args.tagname:
-        fr.getseriesfortnm(tnm=args.tagname)
-        fr.reportseries(ofp=fp)
-    elif args.series and rgs.seriesid:
-        fr.getseriesforsid(sid=args.seriesid)
-        fr.reportseries(ofp=fp)
-    elif args.tags:
-        fr.gettags()
-        fr.reporttags(ofp=fp)
-    elif args.releasesandseries:
-        while True:
+    ofn = None
+    fp = sys.stderr
+
+    if not args.observations:
+        if not args.directory and args.file:
+            ofn = args.file
+        elif args.directory and args.file:
+            if '/' in args.file:
+                argp.print_help() 
+                sys.exit()
+            ofn = os.path.join(args.directory, args.file)
+        if ofn:
             try:
-                ans = input("Are you sure that you want to retrieve all series for all tags? It will pull enormous amounts of data and will possibly exceed the rate limit (yN): ")
-            except ValueError:
-                print("Sorry, I didn't understand that.")
-                # No valid input will restart loop.
-                continue
-            else:
-                break
+                fp = open(ofn, 'w')
+            except Exception as e:
+                print('%s: %s' % (ofn, e) )
+                sys.exit()
 
-        if isinstance(ans, str):
-            if ans == 'y':
-                fr.gettags()
-                fr.getseries()
-                fr.reportseries(ofp=fp)
-            else:
-                print("Good choice.")
-                sys.exit(0)
+    ft = FREDtags()
+
+    if args.observations:
+        if not args.directory:
+            argp.print_help() 
+            sys.exit()
+        if args.tagname:
+            ft.getseriesfortnm(tnm=args.tagname)
+            ft.getobservations()
+            ft.reportobservations(odir=args.directory)
         else:
-            print("Good choice.")
-            sys.exit(0)
-
+            ft.gettags()
+            ft.getseries()
+            ft.getobservations()
+            ft.reportobservations(odir=args.directory)
+    elif args.series and args.tagname:
+        ft.getseriesfortnm(tnm=args.tagname)
+        ft.reportseries(ofp=fp)
+    elif args.series and rgs.seriesid:
+        ft.getseriesforsid(sid=args.seriesid)
+        ft.reportseries(ofp=fp)
+    elif args.tags:
+        ft.gettags()
+        ft.reporttags(ofp=fp)
 
 main()
