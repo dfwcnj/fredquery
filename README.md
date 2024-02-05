@@ -30,8 +30,7 @@ options:<br>
 &nbsp;&nbsp;  --categories          report category data<br>
 &nbsp;&nbsp;  --series              report series urls for categories collected<br>
 &nbsp;&nbsp;  --observations        report timeseries data for categories<br>
-&nbsp;&nbsp;  --categoryid CATEGORYID<br>
-&nbsp;&nbsp;                        categories are identified by category_id<br>
+&nbsp;&nbsp;  --categoryid CATEGORYID a category is identified by category_id<br>
 &nbsp;&nbsp;  --seriesid SERIESID   series are identified by series_id<br>
 &nbsp;&nbsp;  --file FILE           path to an output filename if just a<br>
 &nbsp;&nbsp;                        filename and directory is not provided the<br>
@@ -54,8 +53,7 @@ options:<br>
 &nbsp;&nbsp;  --releases            return releases<br>
 &nbsp;&nbsp;  --series              return series by series_id or by release_id<br>
 &nbsp;&nbsp;  --observations        return timeseries for all series collected<br>
-&nbsp;&nbsp;  --releaseid RELEASEID<br>
-&nbsp;&nbsp;                        a release_id identifies a FRED release<br>
+&nbsp;&nbsp;  --releaseid RELEASEID a release_id identifies a FRED release<br>
 &nbsp;&nbsp;  --seriesid SERIESID   a series_id identifies a FRED series<br>
 &nbsp;&nbsp;  --file FILE           path to an output filename if just a<br>
 &nbsp;&nbsp;                        filename and directory is not provided<br>
