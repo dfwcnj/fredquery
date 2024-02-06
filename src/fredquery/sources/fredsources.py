@@ -54,7 +54,7 @@ class FREDreleases():
         """
         if not ofp: ofp=sys.stdout
         ha = []
-        for id in self.releasedict:
+        for id in self.releasedict.keys():
             ka = self.releasedict[id].keys()
             if len(ha) == 0:
                 for f in ka:
@@ -65,7 +65,7 @@ class FREDreleases():
                 ra.append("'%s'," % (self.releasedict[id][k]) )
             print(''.join(ra), file=ofp)
 
-    def getreleasedata(self, rstr):
+    def getreleasedata(self, sid, rstr):
         """ getreleasedata - collect the data for a release
             rstr - response string for the api query
         """
@@ -74,6 +74,8 @@ class FREDreleases():
             id = child.attrib['id']
             ka = child.attrib.keys()
             self.releasedict[id] = {}
+            self.releasedict[id]['source_id'] = sid
+            self.releasedict[id]['sourcename'] = self.sourcedict[sid]['name']
             for k in ka:
                 self.releasedict[id][k] = child.attrib[k]
             self.releasedict[id]['url'] =\
@@ -83,14 +85,14 @@ class FREDreleases():
         url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
         resp=self.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getreleasedata(rstr)
+        self.getreleasedata(sid, rstr)
 
     def getreleases(self):
         for sid in self.sourcedict:
             url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
             resp=self.query(url)
             rstr = resp.read().decode('utf-8')
-            self.getreleasedata(rstr)
+            self.getreleasedata(sid, rstr)
             time.sleep(1)
 
     def reportsources(self, ofp):

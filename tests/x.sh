@@ -19,3 +19,4 @@ python $TDIR/fredquery/tags/fredtags.py --observations --directory /tmp --tagnam
 #python $TDIR/fredquery/tags/fredtags.py --observations --directory /tmp --seriesid 
 
 python $TDIR/fredquery/sources/fredsources.py --sources --file /tmp/sources.csv
+python $TDIR/fredquery/sources/fredsources.py --releases --file /tmp/sreleases.csv
