@@ -26,10 +26,12 @@ class FREDcategories():
         self.asourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.rapi_key = 'YOURAPIKEYGOESHERE'
-        if 'FREDKEY' in os.environ:
-            self.api_key = os.environ['FREDKEY']
+        if 'FRED_API_KEY' in os.environ:
+            self.api_key = os.environ['FRED_API_KEY']
         else:
             print('FRED api_key required: %s' % (self.kurl), file=sys.stderr)
+            print('assign this key to FRED_API_KEY env variable',
+                                  file=sys.stderr)
             sys.exit()
         self.npages  = 7
         self.categorydict= {}

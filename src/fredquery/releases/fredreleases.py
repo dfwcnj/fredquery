@@ -31,10 +31,12 @@ class FREDreleases():
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         # probably a bad idea to put your real api_key in a report
         self.rapi_key = 'YOURAPIKEYGOESHERE'
-        if 'FREDKEY' in os.environ:
-            self.api_key = os.environ['FREDKEY']
+        if 'FRED_API_KEY' in os.environ:
+            self.api_key = os.environ['FRED_API_KEY']
         else:
             print('FRED api_key required: %s' % (self.kurl), file=sys.stderr)
+            print('assign this key to FRED_API_KEY env variable',
+                                  file=sys.stderr)
             sys.exit()
         self.npages  = 7
         self.rid     = None

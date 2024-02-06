@@ -7,7 +7,7 @@ FredQuery uses the stlouisfed.org FRED
 API(https://fred.stlouisfed.org/docs/api/fred/) for the most part to
 access FRED data. To access the data you have to use an api_key that can
 be acquired here(https://fred.stlouisfed.org/docs/api/api_key.html).
-These scripts assume that the api_key is available through the FREDKEY
+These scripts assume that the api_key is available through the FRED_API_KEY
 environmental variable. Each script except for the fredsources.py
 script(coming) will collect basic data for its type. For example
 fredcategories.py will collect data for all its categories. They can
