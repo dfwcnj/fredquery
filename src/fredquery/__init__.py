@@ -3,3 +3,5 @@
 # SPDX-License-Identifier: MIT
 # https://fred.stlouisfed.org/docs/api/fred/
 
+__all__ = [ 'categories', 'releases', 'sources', 'tags' ]
+
