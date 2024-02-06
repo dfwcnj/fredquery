@@ -82,12 +82,20 @@ class FREDreleases():
               '%s?release_id=%s&api_key=%s' % (self.rurl, id, self.rapi_key)
 
     def getreleasesforsid(self, sid):
+        """ getreleaseforsid - collect the data for a release for a source_id
+            sid - source_id
+        """
+        xroot = ET.fromstring(rstr)
         url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
         resp=self.query(url)
         rstr = resp.read().decode('utf-8')
         self.getreleasedata(sid, rstr)
 
     def getreleases(self):
+        """ getreleases - collect all releases for sources collected
+            sid - source_id
+        """
+        xroot = ET.fromstring(rstr)
         for sid in self.sourcedict:
             url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
             resp=self.query(url)
