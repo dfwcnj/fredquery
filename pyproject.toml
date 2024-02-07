@@ -34,6 +34,14 @@ Source = "https://github.com/dfwcnj/fredquery"
 [tool.hatch.version]
 path = "src/fredquery/__about__.py"
 
+[tool.hatch.build.targets.sdist]
+include = [
+"fredquery/*/*.py"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [ 'src/categories', 'src/releases', 'src/tags', 'src/sources' ]
+
 [tool.hatch.envs.default]
 dependencies = [
   "coverage[toml]>=6.5",

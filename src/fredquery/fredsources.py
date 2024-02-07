@@ -1,7 +1,7 @@
 
 #! env python
 
-# return information on releases or their sries
+# return information on sources and their releases
 #
 
 import os
@@ -13,9 +13,14 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
-class FREDreleases():
+class FREDsources():
 
     def __init__(self):
+        """ FREDsources
+
+        collects sources and their releases
+        data
+        """
         # fred sources
         self.surl = 'https://api.stlouisfed.org/fred/sources'
         self.sourcedict = {}
@@ -38,8 +43,10 @@ class FREDreleases():
         self.rid     = None
 
     def query(self, url=None):
-        """query - query an url
-         url  - required
+        """query(url)
+
+        query an url
+        url - url to collect
         """
         try:
             req = urllib.request.Request(url)
@@ -51,8 +58,10 @@ class FREDreleases():
             sys.exit(1)
 
     def reportreleases(self, ofp):
-        """ reportreleases - report all sources collected
-            ofp - file pointer to which to write
+        """ reportreleases(ofp)
+
+        report all releases collected
+        ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
         ha = []
@@ -68,8 +77,11 @@ class FREDreleases():
             print(''.join(ra), file=ofp)
 
     def getreleasedata(self, sid, rstr):
-        """ getreleasedata - collect the data for a release
-            rstr - response string for the api query
+        """ getreleasedata(sid, rstr)
+
+        collect the data for a release
+        sid - source_id
+        rstr - response string for the api query
         """
         xroot = ET.fromstring(rstr)
         for child in xroot:
@@ -84,8 +96,10 @@ class FREDreleases():
               '%s?release_id=%s&api_key=%s' % (self.rurl, id, self.rapi_key)
 
     def getreleasesforsid(self, sid):
-        """ getreleaseforsid - collect the data for a release for a source_id
-            sid - source_id
+        """ getreleaseforsid(sid)
+
+        collect the data for a release for a source_id
+        sid - source_id
         """
         xroot = ET.fromstring(rstr)
         url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
@@ -94,8 +108,9 @@ class FREDreleases():
         self.getreleasedata(sid, rstr)
 
     def getreleases(self):
-        """ getreleases - collect all releases for sources collected
-            sid - source_id
+        """ getreleases()
+
+        collect all releases for sources collected
         """
         xroot = ET.fromstring(rstr)
         for sid in self.sourcedict:
@@ -106,8 +121,10 @@ class FREDreleases():
             time.sleep(1)
 
     def reportsources(self, ofp):
-        """reportreleases - report data on all Dreleases collected
-           ofp - file pointer to which to write
+        """reportsources(ofp)
+
+        report data on all sources collected
+        ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
         ha = []
@@ -125,8 +142,10 @@ class FREDreleases():
             print(''.join(ra), file=ofp)
 
     def getsourcedata(self, rstr):
-        """ sourcedata - collect data on a FRED release
-            rstr - response string for the api query
+        """ sourcedata(rstr)
+
+        collect source data for a FRED source
+        rstr - xml response string for the api query
         """
         xroot = ET.fromstring(rstr)
         for child in xroot:
@@ -140,7 +159,9 @@ class FREDreleases():
             if 'link' not in ka: self.sourcedict[id]['link'] = ''
 
     def getsources(self):
-        """ getsources - collect all sources
+        """ getsources()
+
+        collect all FRED sources
         """
         url = '%s?api_key=%s' % (self.surl, self.api_key)
         resp = self.query(url)
@@ -148,47 +169,48 @@ class FREDreleases():
         #  print(rstr)
         self.getsourcedata(rstr)
 
-def main():
-    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED sources and/or their releases')
+if __name__ == '__main__':
+    def main():
+        argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED sources and/or their releases')
 
-    argp.add_argument('--sources', action='store_true', default=False,
-       help='return sources')
-    argp.add_argument('--releases', action='store_true', default=False,
-       help='return releases for a source_id')
+        argp.add_argument('--sources', action='store_true', default=False,
+           help='return sources')
+        argp.add_argument('--releases', action='store_true', default=False,
+           help='return releases for a source_id')
 
-    argp.add_argument('--sourceid', required=False,
-       help='a source_id identifies a FRED source')
+        argp.add_argument('--sourceid', required=False,
+           help='a source_id identifies a FRED source')
 
-    argp.add_argument('--file', help="path to an output filename\n\
-            if just a filename and--directory is not provided\
-            the file is created in the current directory")
+        argp.add_argument('--file', help="path to an output filename\n\
+                if just a filename and--directory is not provided\
+                the file is created in the current directory")
 
-    args=argp.parse_args()
+        args=argp.parse_args()
 
-    if not args.sources and not args.releases:
-        argp.print_help()
-        sys.exit(1)
-
-    fp = sys.stdout
-
-    if args.file:
-        try:
-            fp = open(args.file, 'w')
-        except Exception as e:
-            print('%s: %s' % (args.file, e) )
+        if not args.sources and not args.releases:
+            argp.print_help()
             sys.exit(1)
 
-    fs = FREDreleases()
+        fp = sys.stdout
 
-    if args.sources:
-        fs.getsources()
-        fs.reportsources(ofp=fp)
-    elif args.releases and args.sourceid:
-        fs.getreleasesforsid(sid = args.sourceid)
-        fs.reportreleases(ofp=fp)
-    elif args.releases:
-        fs.getsources()
-        fs.getreleases()
-        fs.reportreleases(ofp=fp)
+        if args.file:
+            try:
+                fp = open(args.file, 'w')
+            except Exception as e:
+                print('%s: %s' % (args.file, e) )
+                sys.exit(1)
 
-main()
+        fs = FREDsources()
+
+        if args.sources:
+            fs.getsources()
+            fs.reportsources(ofp=fp)
+        elif args.releases and args.sourceid:
+            fs.getreleasesforsid(sid = args.sourceid)
+            fs.reportreleases(ofp=fp)
+        elif args.releases:
+            fs.getsources()
+            fs.getreleases()
+            fs.reportreleases(ofp=fp)
+
+    main()

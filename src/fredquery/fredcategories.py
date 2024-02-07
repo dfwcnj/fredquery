@@ -16,8 +16,10 @@ import xml
 from xml.etree import ElementTree as ET
 
 class FREDcategories():
-    """
-    collect and report stlouisfed.org FRED categories and/or their series.
+    """ FREDcategories
+
+    collect and report stlouisfed.org FRED categories, their series, and
+    their observations(timeseries data)
     """
     def __init__(self):
         self.curl = 'https://fred.stlouisfed.org/categories'
@@ -39,9 +41,10 @@ class FREDcategories():
         self.observationsdict = {}
 
     def query(self, url=None):
-        """
-         query - query an url
-         url  - required
+        """ query(url) 
+ 
+        retrieve a url
+        url - content to retrieve
         """
         try:
             req = urllib.request.Request(url)
@@ -53,8 +56,9 @@ class FREDcategories():
             sys.exit(1)
 
     def reportobservations(self, odir):
-        """
-        reportobservations - report category timeseries
+        """ reportobservations(odir)
+
+        report category timeseries
         odir - directory that will hold the output
         """
         if not odir:
@@ -84,8 +88,9 @@ class FREDcategories():
 
 
     def getobservationdata(self, sid, rstr):
-        """
-        getobservationdata - parse the observation xml
+        """getobservationdata(sid, rstr)
+
+        parse the observation xml
         rstr - decoded response of a urllib request
         """
         xroot = ET.fromstring(rstr)
@@ -100,8 +105,9 @@ class FREDcategories():
             self.observationsdict[sid].append(obs)
 
     def getobservations(self):
-        """
-        getobservations - time series data for all series collected
+        """ getobservations()
+
+        time observation(timeseries) data for all series collected
         """
         for sid in self.seriesdict:
             url = '%s?series_id=%s&api_key=%s' % (self.asourl, sid,
@@ -113,8 +119,9 @@ class FREDcategories():
             time.sleep(1)
 
     def reportseries(self, ofp):
-        """
-        reportseries - report series data for categories
+        """ reportseries(ofp)
+
+        report series data for categories
         rstr - decoded response of a urllib request
         """
         ha = []
@@ -133,8 +140,9 @@ class FREDcategories():
             print(''.join(ra), file=ofp)
 
     def getseriesdata(self, rstr):
-        """
-        getseriesdata - get series data for a category
+        """ getseriesdata(rstr)
+
+        get series data for a category
         rstr - decoded response of a urllib request
         """
         xroot = ET.fromstring(rstr)
@@ -153,8 +161,10 @@ class FREDcategories():
                 self.seriesdict[id][k] = adict[k]
 
     def getseriesforsid(self, sid):
-        """ getseriesforsid - get a series for a series_id
-            sid - series_id - required
+        """ getseriesforsid(sid)
+
+        get a series for a series_id
+        sid - series_id
         """
         if not sid:
             print('getseriesforsid: sid required', file=stderr)
@@ -166,8 +176,10 @@ class FREDcategories():
         self.getseriesdata(rstr)
 
     def getseriesforcid(self, cid):
-        """
-        getseriesforcid - collect series data for a category_id
+        """ getseriesforcid(cid)
+
+        collect series data for a category_id
+        cid - category_id
         """
         url = '%s?category_id=%s&api_key=%s' % (self.acsurl, cid, self.api_key)
         resp=self.query(url)
@@ -175,8 +187,9 @@ class FREDcategories():
         self.getseriesdata(rstr)
 
     def getseries(self):
-        """
-        getseries - collect series data for categories and report them
+        """ getseries
+
+        collect series data for all categories collected
         """
         for cid in self.categorydict.keys():
             url = '%s&api_key=%s' % (self.acsurl, cid, self.api_key)
@@ -186,16 +199,20 @@ class FREDcategories():
             time.sleep(1)
 
     def reportcategories(self, ofp):
-        """
-        reportcategories - report links to data for categories
+        """ reportcategories(ofp)
+
+        report links to data for categories
+        ofp - file pointer to output file
         """
         for k in self.categorydict.keys():
             nm = self.categorydict[k]['name']
             print("'%s','%s'" % (nm, k), file=ofp )
 
     def getcategorydata(self, rstr):
-        """
+        """ getcategorydata(rstr)
+
         parse the html to find relative link to tags complete the url
+        the FRED api doesn't seem to have an xml interface yet
         rstr - html string to parse
         """
         # print(rstr, file=sys.stderr)
@@ -233,8 +250,10 @@ class FREDcategories():
         self.categorydict = parser.cdict
 
     def getcategory(self, cid):
-        """
-        getcategory - collect data for a  category
+        """ getcategory(cid)
+
+        collect data for a  category
+        cid - category_id to collect
         """
         url = '%s?category_id=%s&api_key=%s' % (self.acurl, cid,
               self.api_key)
@@ -245,78 +264,81 @@ class FREDcategories():
 
     def getcategories(self):
         """
-        getcategories - collect all FRED categories
+        getcategories()
+
+        collect all FRED categories
         """
         resp = self.query(self.curl)
         rstr = resp.read().decode('utf-8')
         # print(rstr, file=sys.stderr)
         self.getcategorydata(rstr)
 
-def main():
-    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED categories and/or series')
+if __name__ == '__main__':
+    def main():
+        argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED categories and/or series')
 
-    argp.add_argument('--categories', action='store_true', default=False,
-                       help="report category data")
-    argp.add_argument('--series', action='store_true', default=False,
-                       help="report series urls for categories collected")
-    argp.add_argument('--observations', action='store_true', default=False,
-                       help="report timeseries data for categories")
+        argp.add_argument('--categories', action='store_true', default=False,
+                           help="report category data")
+        argp.add_argument('--series', action='store_true', default=False,
+                           help="report series urls for categories collected")
+        argp.add_argument('--observations', action='store_true', default=False,
+                           help="report timeseries data for categories")
 
-    argp.add_argument('--categoryid', help="categories are identified by\
-          category_id")
-    argp.add_argument('--seriesid', help="series are identified by series_id")
+        argp.add_argument('--categoryid', help="categories are identified by\
+              category_id")
+        argp.add_argument('--seriesid', help="series are identified by series_id")
 
-    argp.add_argument('--file', help="path to an output filename\n\
-            if just a filename and--directory is not provided\
-            the file is created in the current directory")
-    argp.add_argument('--directory',
-                    help="directory to write the output use --directory for\n\
-                         storing observations, filenames autogenerated")
+        argp.add_argument('--file', help="path to an output filename\n\
+                if just a filename and--directory is not provided\
+                the file is created in the current directory")
+        argp.add_argument('--directory',
+                        help="directory to write the output use --directory for\n\
+                             storing observations, filenames autogenerated")
 
-    args = argp.parse_args()
+        args = argp.parse_args()
 
-    if not args.categories and not args.series and not args.observations:
-        argp.print_help()
-        sys.exit()
-
-    ofn = None
-    fp = sys.stderr
-
-    if not args.observations:
-        if not args.directory and args.file:
-            ofn = args.file
-        elif args.directory and args.file:
-            if '/' in args.file:
-                argp.print_help()
-                sys.exit()
-            ofn = os.path.join(args.directory, args.file)
-        if ofn:
-            try:
-                fp = open(ofn, 'w')
-            except Exception as e:
-                print('%s: %s' % (ofn, e) )
-
-    fc = FREDcategories()
-    if args.observations:
-        if not args.directory:
+        if not args.categories and not args.series and not args.observations:
             argp.print_help()
             sys.exit()
-        if args.categoryid:
+
+        ofn = None
+        fp = sys.stderr
+
+        if not args.observations:
+            if not args.directory and args.file:
+                ofn = args.file
+            elif args.directory and args.file:
+                if '/' in args.file:
+                    argp.print_help()
+                    sys.exit()
+                ofn = os.path.join(args.directory, args.file)
+            if ofn:
+                try:
+                    fp = open(ofn, 'w')
+                except Exception as e:
+                    print('%s: %s' % (ofn, e) )
+
+        fc = FREDcategories()
+        if args.observations:
+            if not args.directory:
+                argp.print_help()
+                sys.exit()
+            if args.categoryid:
+                fc.getseriesforcid(cid=args.categoryid)
+                fc.getobservations()
+                fc.reportobservations(odir=args.directory)
+            else:
+                fc.getcategories()
+                fc.getseries()
+                fc.getobservations()
+                fc.reportobservations(odir=args.directory)
+        elif args.series and args.categoryid:
             fc.getseriesforcid(cid=args.categoryid)
-            fc.getobservations()
-            fc.reportobservations(odir=args.directory)
-        else:
+            fc.reportseries(ofp=fp)
+        elif args.series and args.seriesid:
+            fc.getseriesforsid(cid=args.seriesid)
+            fc.reportseries(ofp=fp)
+        elif args.categories:
             fc.getcategories()
-            fc.getseries()
-            fc.getobservations()
-            fc.reportobservations(odir=args.directory)
-    elif args.series and args.categoryid:
-        fc.getseriesforcid(cid=args.categoryid)
-        fc.reportseries(ofp=fp)
-    elif args.series and args.seriesid:
-        fc.getseriesforsid(cid=args.seriesid)
-        fc.reportseries(ofp=fp)
-    elif args.categories:
-        fc.getcategories()
-        fc.reportcategories(ofp=fp)
-main()
+            fc.reportcategories(ofp=fp)
+    main()

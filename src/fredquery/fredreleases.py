@@ -15,6 +15,11 @@ from xml.etree import ElementTree as ET
 class FREDreleases():
 
     def __init__(self):
+        """ FREDreleases
+
+        collects categories, their releases, series for the release
+        and observations(timeseries data) for the series
+        """
         # fred releases
         self.rurl = 'https://api.stlouisfed.org/fred/releases'
         self.releasedict = {}
@@ -44,8 +49,10 @@ class FREDreleases():
         self.observationsdict = {}
 
     def query(self, url=None):
-        """query - query an url
-         url  - required
+        """query(url)
+
+        query an url
+        url - url to collect
         """
         try:
             req = urllib.request.Request(url)
@@ -57,8 +64,9 @@ class FREDreleases():
             sys.exit(1)
 
     def reportobservations(self, odir):
-        """
-        reportobservations - report category timeseries
+        """ reportobservations(odir)
+
+        report category timeseries
         rstr - decoded response of a urllib request
         """
         if not odir:
@@ -88,8 +96,10 @@ class FREDreleases():
 
 
     def getseriesobservationdata(self, sid, rstr):
-        """
-        getseriesobservationdata - parse the observation xml
+        """ getseriesobservationdata(sid, rstr)
+
+        parse the observation xml
+        sid - series id because the observation data doesn't have it
         rstr - decoded response of a urllib request
         """
         xroot = ET.fromstring(rstr)
@@ -104,8 +114,9 @@ class FREDreleases():
             self.observationsdict[sid].append(obs)
 
     def getobservations(self):
-        """
-        getobservations - time series data for all series collected
+        """ getobservations()
+
+        time series data for all series collected
         """
         for sid in self.seriesdict:
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
@@ -117,8 +128,10 @@ class FREDreleases():
             time.sleep(1)
 
     def reportseries(self, ofp):
-        """ reportseries - report all series collected
-            ofp - file pointer to which to write
+        """ reportseries(ofp)
+
+        report all series collected
+        ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
         ha = []
@@ -134,8 +147,10 @@ class FREDreleases():
             print(''.join(ra), file=ofp)
 
     def getseriesdata(self, rstr):
-        """ getseriesdata - collect the data for a series
-            rstr - response string for the api query
+        """ getseriesdata(rstr)
+
+        collect the data for a series for a release
+        rstr - response string for the api query
         """
         xroot = ET.fromstring(rstr)
         for child in xroot:
@@ -148,8 +163,10 @@ class FREDreleases():
               '%s?series_id=%s&api_key=%s' % (self.sourl, id, self.rapi_key)
 
     def getseriesforsid(self, sid):
-        """ getseriesforsid - get a series for a series_id
-            sid - series_id - required
+        """ getseriesforsid(sid)
+
+        get a series for a series_id
+        sid - series_id - required
         """
         if not sid:
             print('getseriesforsid: sid required', file=stderr)
@@ -161,8 +178,10 @@ class FREDreleases():
         self.getseriesdata(rstr)
 
     def getseriesforrid(self, rid):
-        """ getseriesforrid - get all series for a release_id
-            rid - release_id - required
+        """ getseriesforrid(rid)
+
+        get all series for a release_id
+        rid - release_id - required
         """
         if not rid:
             print('getseriesforrid: rid required', file=stderr)
@@ -174,7 +193,9 @@ class FREDreleases():
         self.getseriesdata(rstr)
 
     def getseries(self):
-        """ getseries - get all series for all releases collected
+        """ getseries()
+
+        get all series for all releases collected
         """
         # a series is associated with a release
         for k in self.releasedict.keys():
@@ -194,49 +215,53 @@ class FREDreleases():
 
     # XXX nested organization - csv representation doesn't make sense
     # XXX finish me
-    def getreleasetabledata(self, rstr):
-        """ getreleasetabledata - collect data for a release table
-            rstr - response string for the api query
-        """
-        xroot = ET.fromstring(rstr)
-        rid = None
-        nm  = None
-        for child in xroot:
-            sid = None
-            eid = None
-            if child.tag == 'release_id':
-                rid = child.text
-                self.releasetabledict[rid]={}
-                continue
-            elif child.tag == 'name':
-                self.releasetabledict[rid]['name']=child.text
-                continue
-            elif child.tag == 'element_id':
-                self.releasetabledict[rid]['element_id']=child.text
-                continue
-            elif child.tag == 'element':
-                self.releasetabledict[rid]['elements']=[]
-                elementdict={}
-                for gchild in child:
-                    if gchild.tag == 'children':
-                        elementdict['children'] = []
-                        childdict = {}
-                        for ggchild in gchild:
-                            if ggchild.text != None:
-                                childdict[gchild.tag] = ggchild.text
-                                continue
-                        elementdict['children'].append(childdict)
-                    elif gchild.text != None:
-                        elementdict[gchild.tag] = gchild.text
-                        continue
-                self.releasetabledict[rid]['elements'].append(elementdict)
-            else:
-                if rid and nm: self.releasetabledict[rid]['name'] = nm
-                if rid and eid: self.releasetabledict[rid]['element_id'] = eid
+#    def getreleasetabledata(self, rstr):
+#        """ getreleasetabledata - collect data for a release table
+#            NOT TESTED
+#            rstr - response string for the api query
+#
+#        """
+#        xroot = ET.fromstring(rstr)
+#        rid = None
+#        nm  = None
+#        for child in xroot:
+#            sid = None
+#            eid = None
+#            if child.tag == 'release_id':
+#                rid = child.text
+#                self.releasetabledict[rid]={}
+#                continue
+#            elif child.tag == 'name':
+#                self.releasetabledict[rid]['name']=child.text
+#                continue
+#            elif child.tag == 'element_id':
+#                self.releasetabledict[rid]['element_id']=child.text
+#                continue
+#            elif child.tag == 'element':
+#                self.releasetabledict[rid]['elements']=[]
+#                elementdict={}
+#                for gchild in child:
+#                    if gchild.tag == 'children':
+#                        elementdict['children'] = []
+#                        childdict = {}
+#                        for ggchild in gchild:
+#                            if ggchild.text != None:
+#                                childdict[gchild.tag] = ggchild.text
+#                                continue
+#                        elementdict['children'].append(childdict)
+#                    elif gchild.text != None:
+#                        elementdict[gchild.tag] = gchild.text
+#                        continue
+#                self.releasetabledict[rid]['elements'].append(elementdict)
+#            else:
+#                if rid and nm: self.releasetabledict[rid]['name'] = nm
+#                if rid and eid: self.releasetabledict[rid]['element_id'] = eid
 
     def getreleasetable(self, rid):
-        """ getreleasetable - get a release table fir a release_id
-            rid - release_id - required
+        """ getreleasetable(rid)
+
+        get a release table fir a release_id
+        rid - release_id
         """
         if not rid:
             print('getseriesforrid: rid required', file=stderr)
@@ -247,14 +272,18 @@ class FREDreleases():
         self.getreleasetabledata(rstr)
 
     def getreleasetables(self):
-        """ getreleasetables - get release tables for all releases collected
+        """ getreleasetables()
+
+        get release tables for all releases collected
         """
         for rid in self.releasedict.keys():
             self.getreleasetable(rid)
 
     def reportreleases(self, ofp):
-        """reportreleases - report data on all Dreleases collected
-           ofp - file pointer to which to write
+        """reportreleases(ofp)
+
+        report data on all Dreleases collected
+        ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
         ha = []
@@ -272,8 +301,10 @@ class FREDreleases():
             print(''.join(ra), file=ofp)
 
     def getreleasedata(self, rstr):
-        """ getreleasedata - collect data on a FRED release
-            rstr - response string for the api query
+        """ getreleasedata(rstr)
+
+        collect data on a FRED release
+        rstr - xml response string for the api query
         """
         xroot = ET.fromstring(rstr)
         for child in xroot:
@@ -287,7 +318,9 @@ class FREDreleases():
             if 'link' not in ka: self.releasedict[id]['link'] = ''
 
     def getreleases(self):
-        """ getreleases - collect all releases
+        """ getreleases()
+
+        collect all releases
         """
         url = '%s?api_key=%s' % (self.rurl, self.api_key)
         resp = self.query(url)
@@ -295,75 +328,76 @@ class FREDreleases():
         #  print(rstr)
         self.getreleasedata(rstr)
 
-def main():
-    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED releases and/or their time series')
+if __name__ == '__main__':
+    def main():
+        argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED releases and/or their time series')
 
-    argp.add_argument('--releases', action='store_true', default=False,
-       help='return releases')
-    argp.add_argument('--series', action='store_true', default=False,
-       help='return series by series_id or by release_id')
-    argp.add_argument('--observations', action='store_true', default=False,
-       help='return timeseries for all series collected')
+        argp.add_argument('--releases', action='store_true', default=False,
+           help='return releases')
+        argp.add_argument('--series', action='store_true', default=False,
+           help='return series by series_id or by release_id')
+        argp.add_argument('--observations', action='store_true', default=False,
+           help='return timeseries for all series collected')
 
-    argp.add_argument('--releaseid', required=False,
-       help='a release_id identifies a FRED release')
-    argp.add_argument('--seriesid', required=False,
-       help='a series_id identifies a FRED series')
+        argp.add_argument('--releaseid', required=False,
+           help='a release_id identifies a FRED release')
+        argp.add_argument('--seriesid', required=False,
+           help='a series_id identifies a FRED series')
 
-    argp.add_argument('--file', help="path to an output filename\n\
-            if just a filename and--directory is not provided\
-            the file is created in the current directory")
-    argp.add_argument('--directory',
-                    help="directory to write the output, if --observations\
-                         filenames are autogenerated")
+        argp.add_argument('--file', help="path to an output filename\n\
+                if just a filename and--directory is not provided\
+                the file is created in the current directory")
+        argp.add_argument('--directory',
+                        help="directory to write the output, if --observations\
+                             filenames are autogenerated")
 
-    args=argp.parse_args()
+        args=argp.parse_args()
 
-    if not args.releases and not args.series and not args.observations:
-        argp.print_help()
-        sys.exit(1)
+        if not args.releases and not args.series and not args.observations:
+            argp.print_help()
+            sys.exit(1)
 
-    ofn=None
-    fp = sys.stdout
+        ofn=None
+        fp = sys.stdout
 
-    if not args.observations:
-        if not args.directory and args.file:
-            ofn = args.file
-        elif args.directory and args.file:
-            if '/' in args.file:
+        if not args.observations:
+            if not args.directory and args.file:
+                ofn = args.file
+            elif args.directory and args.file:
+                if '/' in args.file:
+                    argp.print_help()
+                    sys.exit()
+                ofn = os.path.join(args.directory, args.file)
+            if ofn:
+                try:
+                    fp = open(ofn, 'w')
+                except Exception as e:
+                    print('%s: %s' % (ofn, e) )
+                    sys.exit()
+
+        fr = FREDreleases()
+
+        if args.observations:
+            if not args.directory:
                 argp.print_help()
                 sys.exit()
-            ofn = os.path.join(args.directory, args.file)
-        if ofn:
-            try:
-                fp = open(ofn, 'w')
-            except Exception as e:
-                print('%s: %s' % (ofn, e) )
-                sys.exit()
-
-    fr = FREDreleases()
-
-    if args.observations:
-        if not args.directory:
-            argp.print_help()
-            sys.exit()
-        if args.releaseid:
-            fr.getseriesforrid(args.releaseid)
-            fr.getobservations()
-            fr.reportobservations(odir=args.directory)
-        else:
+            if args.releaseid:
+                fr.getseriesforrid(args.releaseid)
+                fr.getobservations()
+                fr.reportobservations(odir=args.directory)
+            else:
+                fr.getreleases()
+                fr.getseries()
+                fr.getobservations()
+                fr.reportobservations(odir=args.directory)
+        elif args.series and args.releaseid:
+            fr.getseriesforrid(rid=args.releaseid)
+            fr.reportseries(ofp=fp)
+        elif args.series and args.seriesid:
+            fr.getseriesforsid(sid=args.seriesid)
+            fr.reportseries(ofp=fp)
+        elif args.releases:
             fr.getreleases()
-            fr.getseries()
-            fr.getobservations()
-            fr.reportobservations(odir=args.directory)
-    elif args.series and args.releaseid:
-        fr.getseriesforrid(rid=args.releaseid)
-        fr.reportseries(ofp=fp)
-    elif args.series and args.seriesid:
-        fr.getseriesforsid(sid=args.seriesid)
-        fr.reportseries(ofp=fp)
-    elif args.releases:
-        fr.getreleases()
-        fr.reportreleases(ofp=fp)
+            fr.reportreleases(ofp=fp)
 
-main()
+    main()
