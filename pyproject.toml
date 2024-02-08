@@ -36,11 +36,16 @@ path = "src/fredquery/__about__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-"fredquery/*/*.py"
+"src/fredquery/__about__.py",
+"src/fredquery/__init__.py",
+"src/fredquery/fredcategories.py",
+"src/fredquery/fredreleases.py",
+"src/fredquery/fredsources.py",
+"src/fredquery/fredtags.py"
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = [ 'src/categories', 'src/releases', 'src/tags', 'src/sources' ]
+packages = ["src/fredquery"]
 
 [tool.hatch.envs.default]
 dependencies = [
