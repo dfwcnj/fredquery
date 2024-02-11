@@ -1,6 +1,6 @@
 #! env python
 
-# return information on categories
+# return information on categories, their releases, or their series
 #
 #
 

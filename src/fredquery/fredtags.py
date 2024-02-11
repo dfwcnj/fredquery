@@ -2,7 +2,7 @@
 
 # return information on tags
 #
-# XXX print to output file param or sys.stdout
+# report tags, their releases, or their series
 #
 
 import os

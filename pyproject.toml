@@ -36,8 +36,6 @@ path = "src/fredquery/__about__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-"src/fredquery/__about__.py",
-"src/fredquery/__init__.py",
 "src/fredquery/fredcategories.py",
 "src/fredquery/fredreleases.py",
 "src/fredquery/fredsources.py",
