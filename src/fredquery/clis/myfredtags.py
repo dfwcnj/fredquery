@@ -7,6 +7,7 @@
 #
 
 import argparse
+import sys
 
 from  fredquery import fredtags
 

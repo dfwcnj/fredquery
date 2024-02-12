@@ -5,6 +5,7 @@
 #
 
 import argparse
+import sys
 
 from  fredquery import fredreleases
 
