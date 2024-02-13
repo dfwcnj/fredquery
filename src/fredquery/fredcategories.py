@@ -24,8 +24,8 @@ class FREDcategories():
     def __init__(self):
         self.curl = 'https://fred.stlouisfed.org/categories'
         self.acurl = 'https://api.stlouisfed.org/fred/category'
-        self.acsurl = 'https://api.stlouisfed.org/fred/category/series'
-        self.asourl = 'https://api.stlouisfed.org/fred/series/observations'
+        self.csurl = 'https://api.stlouisfed.org/fred/category/series'
+        self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.pause = 2 # number of seconds to pause
         self.rapi_key = 'YOURAPIKEYGOESHERE'
@@ -125,7 +125,7 @@ class FREDcategories():
         time observation(timeseries) data for all series collected
         """
         for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.asourl, sid,
+            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
             resp = self.query(url)
             rstr = resp.read().decode('utf-8')
@@ -193,7 +193,7 @@ class FREDcategories():
         observation = time series data
         """
         for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.asourl, sid,
+            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
             units = self.seriesdict[sid]['units']
             resp = self.query(url)
@@ -239,7 +239,7 @@ class FREDcategories():
             ka = adict.keys()
             id = adict['id']
             self.seriesdict[id]={}
-            url='%s?series_id=%s&api_key=%s' % (self.asourl, adict['id'],
+            url='%s?series_id=%s&api_key=%s' % (self.sourl, adict['id'],
                 self.rapi_key)
             self.seriesdict[id]['url'] = url
             for k in ka:
@@ -266,7 +266,7 @@ class FREDcategories():
         collect series data for a category_id
         cid - category_id
         """
-        url = '%s?category_id=%s&api_key=%s' % (self.acsurl, cid, self.api_key)
+        url = '%s?category_id=%s&api_key=%s' % (self.csurl, cid, self.api_key)
         resp=self.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
@@ -277,7 +277,7 @@ class FREDcategories():
         collect series data for all categories collected
         """
         for cid in self.categorydict.keys():
-            url = '%s&api_key=%s' % (self.acsurl, cid, self.api_key)
+            url = '%s&api_key=%s' % (self.csurl, cid, self.api_key)
             resp=self.query(url)
             rstr = resp.read().decode('utf-8')
             self.getseriesdata(rstr)
