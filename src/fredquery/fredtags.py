@@ -37,6 +37,7 @@ class FREDtags():
             print('assign this key to FRED_API_KEY env variable',
                                   file=sys.stderr)
             sys.exit()
+        self.pause = 2 # number of seconds to pause
         self.tid     = None
         self.sid     = None
         self.observationsdict = {}
@@ -53,6 +54,20 @@ class FREDtags():
             print("Error %s(%s): %s" % ('query', url, e.reason),
                   file=sys.stderr),
             sys.exit(1)
+
+    def setpause(self, secs):
+        """setpause(secs)
+
+        change the amount of delay between certain operations to
+        try to avoit stlouisfed.org rate limits
+        """
+        si = None
+        try:
+            si = int(secs)
+        except Exception as e:
+            print('setpause(%s): %s' % (secs, e) )
+            return
+        self.pause = si
 
     def reportobservations(self, odir):
         """

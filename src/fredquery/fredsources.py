@@ -46,8 +46,23 @@ class FREDsources():
             print('assign this key to FRED_API_KEY env variable',
                                   file=sys.stderr)
             sys.exit()
+        self.pause = 2 # number of seconds to pause
         self.sid     = None
         self.rid     = None
+
+    def setpause(self, secs):
+        """setpause(secs)
+
+        change the amount of delay between certain operations to
+        try to avoit stlouisfed.org rate limits
+        """
+        si = None
+        try:
+            si = int(secs)
+        except Exception as e:
+            print('setpause(%s): %s' % (secs, e) )
+            return
+        self.pause = si
 
     def query(self, url=None):
         """query(url)

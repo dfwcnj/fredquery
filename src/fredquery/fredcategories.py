@@ -27,6 +27,7 @@ class FREDcategories():
         self.acsurl = 'https://api.stlouisfed.org/fred/category/series'
         self.asourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
+        self.pause = 2 # number of seconds to pause
         self.rapi_key = 'YOURAPIKEYGOESHERE'
         if 'FRED_API_KEY' in os.environ:
             self.api_key = os.environ['FRED_API_KEY']
@@ -39,6 +40,20 @@ class FREDcategories():
         self.categorydict= {}
         self.seriesdict = {}
         self.observationsdict = {}
+
+    def setpause(self, secs):
+        """setpause(secs)
+
+        change the amount of delay between certain operations to
+        try to avoit stlouisfed.org rate limits
+        """
+        si = None
+        try:
+            si = int(secs)
+        except Exception as e:
+            print('setpause(%s): %s' % (secs, e) )
+            return
+        self.pause = si
 
     def query(self, url=None):
         """ query(url) 
