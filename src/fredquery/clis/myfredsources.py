@@ -41,6 +41,7 @@ def main():
     fp = sys.stdout
 
     if not args.observations:
+        ofn=None
         if not args.directory and args.file:
             ofn = args.file
         elif args.directory and args.file:
