@@ -193,7 +193,7 @@ class FREDcategories():
         observation = time series data
         """
         for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+            url = '%s?series_id=%s&api_key=%s' % (self.asourl, sid,
                    self.api_key)
             units = self.seriesdict[sid]['units']
             resp = self.query(url)
