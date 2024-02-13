@@ -114,6 +114,75 @@ class FREDtags():
             self.getseriesobservationdata(sid, rstr)
             time.sleep(1)
 
+    def returnseriesobservationdata(self, sid, units, rstr):
+        """ returnseriesobservationdata(sid, units, rstr)
+
+        parse the observation xml
+        sid - series id because the observation data doesn't have it
+        units - each observation is in this unit
+        rstr - decoded response of a urllib request
+        """
+        xroot = ET.fromstring(rstr)
+        self.observationsdict[sid]=[]
+        obsa = []
+        for child in xroot:
+            adict = child.attrib
+            #print(child.tag, child.attrib, file=sys.stderr)
+            ka = adict.keys()
+            obs={}
+            obs['sid']   = sid
+            obs['units'] = units
+            for k in ka:
+                obs[k] = adict[k]
+            obsa.append(obs)
+        return obsa
+
+    def reportobservation(self, sid, units, obsa, odir):
+        """ reportobservation(sid, obsa, odir)
+
+        report observations for a series_id
+        sid - series_id
+        obsa - list of observations for a series_id
+        odir - directory for storing observations
+        """
+        sfn = os.path.join('%s/%s_%s.csv' % (odir, sid, units) )
+        # units can contain spaces
+        fn = ''.join(sfn.split() )
+        with open(fn, 'w') as fp:
+            ha=[]
+            for obs in obsa:
+                ka = obs.keys()
+                if len(ha) == 0:
+                    for f in ka:
+                        if f == 'value':
+                            sv = '%s_%s' % (sid, units)
+                            ha.append("'%s'" % ''.join(sv.split()) )
+                        else:
+                            ha.append("'%s'" % f)
+                    print(''.join(ha), file=fp)
+                ra=[]
+                for rk in obs.keys():
+                    ra.append("'%s'," % (obs[rk]) )
+                print(''.join(ra), file=fp)
+
+    def getandreportobservations(self, odir):
+        """ getandreportobservations()
+
+        incrementally get and store observation data for all
+        series collected
+        observation = time series data
+        """
+        for sid in self.seriesdict:
+            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+                   self.api_key)
+            units = self.seriesdict[sid]['units']
+            resp = self.query(url)
+            rstr = resp.read().decode('utf-8')
+            # observation data doesn't identify itself
+            obsa = self.returnseriesobservationdata(sid, units, rstr)
+            self.reportobservation(sid, units, obsa, odir)
+            time.sleep(1)
+
     def reportseries(self, ofp):
         """ reportseries - report series for all collected
         """
@@ -278,13 +347,11 @@ if __name__ == '__main__':
                 sys.exit()
             if args.tagname:
                 ft.getseriesfortnm(tnm=args.tagname)
-                ft.getobservations()
-                ft.reportobservations(odir=args.directory)
+                ft.getandreportobservations(odir=args.directory)
             else:
                 ft.gettags()
                 ft.getseries()
-                ft.getobservations()
-                ft.reportobservations(odir=args.directory)
+                ft.getandreportobservations(odir=args.directory)
         elif args.series and args.tagname:
             ft.getseriesfortnm(tnm=args.tagname)
             ft.reportseries(ofp=fp)

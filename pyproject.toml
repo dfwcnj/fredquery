@@ -35,10 +35,10 @@ Source = "https://github.com/dfwcnj/fredquery"
 path = "src/fredquery/__about__.py"
 
 [project.scripts]
-fredcategories = "fredquery.clis.myfredcategories:main"
-fredreleases = "fredquery.clis.myfredreleases:main"
-fredsources = "fredquery.clis.myfredsources:main"
-fredtags = "fredquery.clis.myfredtags:main"
+fredcategories = "fredquery.fredcategories:main"
+fredreleases = "fredquery.fredreleases:main"
+fredsources = "fredquery.fredsources:main"
+fredtags = "fredquery.fredtags:main"
 
 
 [tool.hatch.build.targets.wheel]
