@@ -64,19 +64,26 @@ class FREDreleases():
         self.pause = si
 
     def query(self, url=None):
-        """query(url)
-
-        query an url
-        url - url to collect
+        """ query(url)·
+·
+        retrieve a url
+        url - content to retrieve
         """
-        try:
-            req = urllib.request.Request(url)
-            resp = urllib.request.urlopen(req)
-            return resp
-        except urllib.error.URLError as e:
-            print("Error %s(%s): %s" % ('query', url, e.reason),
-                  file=sys.stderr),
-            sys.exit(1)
+        max   = 5
+        count = 0
+        while True:
+            try:
+                req = urllib.request.Request(url)
+                resp = urllib.request.urlopen(req)
+                return resp
+            except urllib.error.URLError as e:
+                print("Error %s(%s): %s" % ('query', url, e.reason),
+                      file=sys.stderr),
+                count = count + 1
+                if count < max:
+                    time.sleep(self.pause)
+                    continue
+                sys.exit(1)
 
     def reportobservations(self, odir):
         """ reportobservations(odir)

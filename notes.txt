@@ -2,6 +2,8 @@
 
 # FRED
 
+The API allows up to 120 requests per minute.
+
 https://fredhelp.stlouisfed.org/#fred-data-understanding-the-data
 
 https://en.wikipedia.org/wiki/Federal_Reserve_Economic_Data
