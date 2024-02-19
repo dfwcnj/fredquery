@@ -37,32 +37,11 @@ class FREDtags():
             print('assign this key to FRED_API_KEY env variable',
                                   file=sys.stderr)
             sys.exit()
-        self.pause = 2 # number of seconds to pause
+        self.pause   = 2 # number of seconds to pause
+        self.retries = 5 # number of seconds to pause
         self.tid     = None
         self.sid     = None
         self.observationsdict = {}
-
-    def query(self, url=None):
-        """ query(url)·
-·
-        retrieve a url
-        url - content to retrieve
-        """
-        max   = 5
-        count = 0
-        while True:
-            try:
-                req = urllib.request.Request(url)
-                resp = urllib.request.urlopen(req)
-                return resp
-            except urllib.error.URLError as e:
-                print("Error %s(%s): %s" % ('query', url, e.reason),
-                      file=sys.stderr),
-                count = count + 1
-                if count < max:
-                    time.sleep(self.pause)
-                    continue
-                sys.exit(1)
 
     def setpause(self, secs):
         """setpause(secs)
@@ -77,6 +56,40 @@ class FREDtags():
             print('setpause(%s): %s' % (secs, e) )
             return
         self.pause = si
+
+    def setretries(self, secs):
+        """setretries(secs)
+
+        change the max number of query retries
+        """
+        si = None
+        try:
+            si = int(secs)
+        except Exception as e:
+            print('setretries(%s): %s' % (secs, e) )
+            return
+        self.retries = si
+
+    def query(self, url=None):
+        """ query(url)·
+·
+        retrieve a url
+        url - content to retrieve
+        """
+        count = 0
+        while True:
+            try:
+                req = urllib.request.Request(url)
+                resp = urllib.request.urlopen(req)
+                return resp
+            except urllib.error.URLError as e:
+                print("Error %s(%s): %s" % ('query', url, e.reason),
+                      file=sys.stderr),
+                count = count + 1
+                if count < self.retries:
+                    time.sleep(self.pause)
+                    continue
+                sys.exit(1)
 
     def reportobservations(self, odir):
         """

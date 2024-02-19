@@ -38,6 +38,7 @@ path = "src/fredquery/__about__.py"
 fredcategories = "fredquery.fredcategories:main"
 fredreleases = "fredquery.fredreleases:main"
 fredsources = "fredquery.fredsources:main"
+fredseries = "fredquery.fredseries:main"
 fredtags = "fredquery.fredtags:main"
 
 

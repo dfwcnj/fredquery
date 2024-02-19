@@ -1,6 +1,7 @@
+
 #! env python
 
-# return information on categories, their releases, or their series
+# return information on series, their categories, releases, sources, etc
 #
 #
 
@@ -15,17 +16,20 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
-class FREDcategories():
-    """ FREDcategories
+class FREDseries():
+    """ FREDseries
 
-    collect and report stlouisfed.org FRED categories, their series, and
+    collect and report stlouisfed.org FRED series, and
     their observations(timeseries data)
     """
     def __init__(self):
-        self.curl = 'https://fred.stlouisfed.org/categories'
-        self.acurl = 'https://api.stlouisfed.org/fred/category'
-        self.csurl = 'https://api.stlouisfed.org/fred/category/series'
+        self.surl = 'https://fred.stlouisfed.org/series'
+        self.ssurl = 'https://api.stlouisfed.org/fred/series'
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
+        self.scurl = 'https://api.stlouisfed.org/fred/series/categories'
+        self.srurl = 'https://api.stlouisfed.org/fred/series/release'
+        self.sturl = 'https://api.stlouisfed.org/fred/series/tags'
+        self.suurl = 'https://api.stlouisfed.org/fred/series/updates'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.rapi_key = 'YOURAPIKEYGOESHERE'
         if 'FRED_API_KEY' in os.environ:
@@ -35,12 +39,15 @@ class FREDcategories():
             print('assign this key to FRED_API_KEY env variable',
                                   file=sys.stderr)
             sys.exit()
-        self.npages  = 7
         self.pause   = 2 # number of seconds to pause
         self.retries = 5 # number of query retries
-        self.categorydict= {}
         self.seriesdict = {}
         self.observationsdict = {}
+        self.categorydict = {}
+        self.releasedict = {}
+        self.sourcedict = {}
+        self.tagdict = {}
+        self.updatedict = {}
 
     def setpause(self, secs):
         """setpause(secs)
@@ -90,38 +97,6 @@ class FREDcategories():
                     continue
                 sys.exit(1)
 
-    def reportobservations(self, odir):
-        """ reportobservations(odir)
-
-        report category timeseries
-        odir - directory that will hold the output
-        """
-        if not odir:
-            print('no output directory provided', file=sys.stderr)
-            sys.exit(0)
-        for sid in self.observationsdict.keys():
-            sfn=os.path.join('%s/%s_%s.csv' % (odir,
-                    sid, self.seriesdict[sid]['units']) )
-            fn = ''.join(sfn.split() )
-            with open(fn, 'w') as fp:
-                ha=[]
-                for obs in self.observationsdict[sid]:
-                    ka=obs.keys()
-                    if len(ha) == 0:
-                        for f in ka:
-                            if f == 'value':
-                                sv = '%s_%s' % (sid,
-                                      self.seriesdict[sid]['units'])
-                                ha.append("'%s'" % ''.join(sv.split()) )
-                            else:
-                                ha.append("'%s'" % f)
-                        print(''.join(ha), file=fp )
-                    ra = []
-                    for rk in obs.keys():
-                        ra.append("'%s'," % (obs[rk]) )
-                    print(''.join(ra), file=fp )
-
-
     def getobservationdata(self, sid, rstr):
         """getobservationdata(sid, rstr)
 
@@ -138,21 +113,6 @@ class FREDcategories():
             for k in ka:
                 obs[k] = adict[k]
             self.observationsdict[sid].append(obs)
-
-    def getobservations(self):
-        """ getobservations()
-
-        time observation(timeseries) data for all series collected
-        """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            resp = self.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            self.getobservationdata(sid, rstr)
-            time.sleep(1)
-
 
     def returnseriesobservationdata(self, sid, units, rstr):
         """ returnseriesobservationdata(sid, units, rstr)
@@ -271,126 +231,153 @@ class FREDcategories():
         get a series for a series_id
         sid - series_id
         """
-        if not sid:
-            print('getseriesforsid: sid required', file=stderr)
-            sys.exit(1)
-        url = '%s?series_id=%s&api_key=%s' % (self.surl, sid,
+        url = '%s?series_id=%s&api_key=%s' % (self.ssurl, sid,
                                               self.api_key)
         resp = self.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
-    def getseriesforcid(self, cid):
-        """ getseriesforcid(cid)
+    def reportdata(self, dict, ofp):
+        """ reportdata(ofp)
 
-        collect series data for a category_id
-        cid - category_id
+        report data for a collection
+        rstr - decoded response of a urllib request
         """
-        url = '%s?category_id=%s&api_key=%s' % (self.csurl, cid, self.api_key)
-        resp=self.query(url)
-        rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        if dict == None:
+            print('nothing to report', file=sys.sterr)
+            return
+        ha = []
+        ka = dict.keys()
+        for id in ka:
+            ra = []
+            if len(ha) == 0:
+                for k in dict[id].keys():
+                    ha.append("'%s'," % k)
+                print(''.join(ha), file=ofp)
+            ra=[]
+            for rk in dict[id].keys():
+                ra.append("'%s'," % dict[id][rk])
+            print(''.join(ra), file=ofp)
 
-    def getseries(self):
-        """ getseries
+    def getfreddata(self, rstr, dict):
+        """ getfreddata(rstr, dict)
 
-        collect series data for all categories collected
+        get data for the data of a series_id query
+        rstr - decoded response of a urllib request
+        dict - dictionary in which to store the data
         """
-        for cid in self.categorydict.keys():
-            url = '%s&api_key=%s' % (self.csurl, cid, self.api_key)
-            resp=self.query(url)
-            rstr = resp.read().decode('utf-8')
-            self.getseriesdata(rstr)
-            time.sleep(1)
+        xroot = ET.fromstring(rstr)
+        for child in xroot:
+            adict = child.attrib
+            ka = adict.keys()
+            key = None
+            if 'id' in ka:
+                key = adict['id']
+                dict[key] ={}
+            elif 'name' in ka:
+                key = adict['name']
+                dict[key] ={}
+            for k in ka:
+                dict[key][k] = adict[k]
+
 
     def reportcategories(self, ofp):
-        """ reportcategories(ofp)
+        self.reportdata(self.categorydict, ofp)
 
-        report links to data for categories
-        ofp - file pointer to output file
+    def getcategoriesforsid(self, sid):
+        """ getseriesforsid(sid)
+
+        get a series for a series_id
+        sid - series_id
         """
-        for k in self.categorydict.keys():
-            nm = self.categorydict[k]['name']
-            print("'%s','%s'" % (nm, k), file=ofp )
-
-    def getcategorydata(self, rstr):
-        """ getcategorydata(rstr)
-
-        parse the html to find relative link to tags complete the url
-        the FRED api doesn't seem to have an xml interface yet
-        rstr - html string to parse
-        """
-        # print(rstr, file=sys.stderr)
-        class MyHTMLParser(HTMLParser):
-            def __init__(self):
-                super().__init__()
-                self.cid = None
-                self.cdict = {}
-                self.type = None
-                self.burl = 'https://api.stlouisfed.org/fred/category/series'
-            def handle_starttag(self, tag, attrs):
-                if tag == 'a':
-                    if self.type:
-                        cid = attrs[0][1].split('/')[-1]
-                        self.cid= cid
-                        self.cdict[cid]={}
-                        url = '%s?category_id=%s' % (self.burl, cid)
-                        self.cdict[cid]['url'] = url
-                        self.type = None
-                if tag == 'p':
-                    if len(attrs) and 'fred-categories-parent' in attrs[0][1]:
-                        self.type = 'parent'
-                if tag == 'span':
-                    if len(attrs) and 'fred-categories-child' in attrs[0][1]:
-                        self.type = 'child'
-            def handle_endtag(self, tag):
-                pass
-            def handle_data(self, data):
-                if data and self.cid:
-                    self.cdict[self.cid]['name'] = data
-                    self.cid = None
-
-        parser = MyHTMLParser()
-        parser.feed(rstr)
-        self.categorydict = parser.cdict
-
-    def getcategory(self, cid):
-        """ getcategory(cid)
-
-        collect data for a  category
-        cid - category_id to collect
-        """
-        url = '%s?category_id=%s&api_key=%s' % (self.acurl, cid,
-              self.api_key)
+        url = '%s?series_id=%s&api_key=%s' % (self.scurl, sid,
+                                              self.api_key)
         resp = self.query(url)
         rstr = resp.read().decode('utf-8')
-        # print(rstr, file=sys.stderr)
-        self.getcategorydata(rstr)
+        self.getfreddata(rstr, self.categorydict)
 
-    def getcategories(self):
-        """
-        getcategories()
+    def reportreleases(self, ofp):
+        self.reportdata(self.releasedict, ofp)
 
-        collect all FRED categories
+    def getreleasesforsid(self, sid):
+        """ getreleasesforsid(sid)
+
+        get releasєs for a series_id
+        sid - series_id
         """
-        resp = self.query(self.curl)
+        url = '%s?series_id=%s&api_key=%s' % (self.srurl, sid,
+                                              self.api_key)
+        resp = self.query(url)
         rstr = resp.read().decode('utf-8')
-        # print(rstr, file=sys.stderr)
-        self.getcategorydata(rstr)
+        self.getfreddata(rstr, self.releasedict)
+
+    def reportsources(self, ofp):
+        self.reportdata(self.sourcedict, ofp)
+
+    def getsourcesforsid(self, sid):
+        """ getsourcesforsid(sid)
+
+        get sources for a series_id
+        sid - series_id
+        """
+        url = '%s?series_id=%s&api_key=%s' % (self.ssurl, sid,
+                                              self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getfreddata(rstr, self.sourcedict)
+
+    def reporttags(self, ofp):
+        self.reportdata(self.tagdict, ofp)
+
+    def gettagsforsid(self, sid):
+        """ gettagsforsid(sid)
+
+        get tags for a series_id
+        sid - series_id
+        """
+        url = '%s?series_id=%s&api_key=%s' % (self.sturl, sid,
+                                              self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getfreddata(rstr, self.tagdict)
+
+    def reportupdates(self, ofp):
+        self.reportdata(self.updatedict, ofp)
+
+    def getupdatesforsid(self, sid):
+        """ getseriesforsid(sid)
+
+        get updates for a series_id
+        sid - series_id
+        """
+        url = '%s?series_id=%s&api_key=%s' % (self.suurl, sid,
+                                              self.api_key)
+        resp = self.query(url)
+        rstr = resp.read().decode('utf-8')
+        self.getfreddata(rstr, self.updatedict)
+
 
 def main():
-    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED categories and/or series')
+    argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED series')
 
-    argp.add_argument('--categories', action='store_true', default=False,
-                       help="report category data")
     argp.add_argument('--series', action='store_true', default=False,
                        help="report series urls for categories collected")
     argp.add_argument('--observations', action='store_true', default=False,
                        help="report timeseries data for categories")
 
-    argp.add_argument('--categoryid', help="categories are identified by\
-          category_id")
-    argp.add_argument('--seriesid', help="series are identified by series_id")
+    argp.add_argument('--categories', action='store_true', default=False,
+                       help="report categories for this series")
+    argp.add_argument('--releases', action='store_true', default=False,
+                       help="report categories for this series")
+    argp.add_argument('--sources', action='store_true', default=False,
+                       help="report sources for this series")
+    argp.add_argument('--tags', action='store_true', default=False,
+                       help="report tags for this series")
+    argp.add_argument('--updates', action='store_true', default=False,
+                       help="report updates for this series")
+
+    argp.add_argument('--seriesid', required=True,
+        help="series are identified by series_id")
 
     argp.add_argument('--file', help="path to an output filename\n\
             if just a filename and--directory is not provided\
@@ -401,12 +388,8 @@ def main():
 
     args = argp.parse_args()
 
-    if not args.categories and not args.series and not args.observations:
-        argp.print_help()
-        sys.exit()
-
     ofn = None
-    fp = sys.stderr
+    fp = sys.stdout
 
     if not args.observations:
         if not args.directory and args.file:
@@ -422,27 +405,32 @@ def main():
             except Exception as e:
                 print('%s: %s' % (ofn, e) )
 
-    fc = FREDcategories()
+    fc = FREDseries()
     if args.observations:
         if not args.directory:
             argp.print_help()
             sys.exit()
-        if args.categoryid:
-            fc.getseriesforcid(cid=args.categoryid)
-            fc.getandreportobservations(odir=args.directory)
         else:
-            fc.getcategories()
-            fc.getseries()
+            fc.getseriesforsid(sid=args.seriesid)
             fc.getandreportobservations(odir=args.directory)
-    elif args.series and args.categoryid:
-        fc.getseriesforcid(cid=args.categoryid)
-        fc.reportseries(ofp=fp)
     elif args.series and args.seriesid:
         fc.getseriesforsid(sid=args.seriesid)
         fc.reportseries(ofp=fp)
     elif args.categories:
-        fc.getcategories()
+        fc.getcategoriesforsid(sid=args.seriesid)
         fc.reportcategories(ofp=fp)
+    elif args.releases:
+        fc.getreleasesforsid(sid=args.seriesid)
+        fc.reportreleases(ofp=fp)
+    elif args.sources:
+        fc.getsourcesforsid(sid=args.seriesid)
+        fc.reportsources(ofp=fp)
+    elif args.tags:
+        fc.gettagsforsid(sid=args.seriesid)
+        fc.reporttags(ofp=fp)
+    elif args.updates:
+        fc.getupdatesforsid(sid=args.seriesid)
+        fc.reportupdates(ofp=fp)
 
 if __name__ == '__main__':
     main()

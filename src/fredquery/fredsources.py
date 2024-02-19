@@ -46,7 +46,8 @@ class FREDsources():
             print('assign this key to FRED_API_KEY env variable',
                                   file=sys.stderr)
             sys.exit()
-        self.pause = 2 # number of seconds to pause
+        self.pause   = 2 # number of seconds to pause
+        self.retries = 5 # number of query retries
         self.sid     = None
         self.rid     = None
 
@@ -64,13 +65,25 @@ class FREDsources():
             return
         self.pause = si
 
+    def setretries(self, secs):
+        """setretries(secs)
+
+        change the max number of query retries
+        """
+        si = None
+        try:
+            si = int(secs)
+        except Exception as e:
+            print('setretries(%s): %s' % (secs, e) )
+            return
+        self.retries = si
+
     def query(self, url=None):
         """ query(url)·
 ·
         retrieve a url
         url - content to retrieve
         """
-        max   = 5
         count = 0
         while True:
             try:
@@ -81,7 +94,7 @@ class FREDsources():
                 print("Error %s(%s): %s" % ('query', url, e.reason),
                       file=sys.stderr),
                 count = count + 1
-                if count < max:
+                if count < self.retries:
                     time.sleep(self.pause)
                     continue
                 sys.exit(1)
