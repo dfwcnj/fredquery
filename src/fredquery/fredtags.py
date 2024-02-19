@@ -267,7 +267,7 @@ class FREDtags():
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
         resp = self.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(k, rstr)
+        self.getseriesdata(rstr)
 
     def getseriesfortnm(self, tnm):
         """ getseriesfortnm get series for a tag_id
@@ -391,7 +391,7 @@ def main():
     elif args.series and args.tagname:
         ft.getseriesfortnm(tnm=args.tagname)
         ft.reportseries(ofp=fp)
-    elif args.series and rgs.seriesid:
+    elif args.series and args.seriesid:
         ft.getseriesforsid(sid=args.seriesid)
         ft.reportseries(ofp=fp)
     elif args.tags:
