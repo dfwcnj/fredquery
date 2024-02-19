@@ -25,6 +25,7 @@ class FREDcategories():
         self.curl = 'https://fred.stlouisfed.org/categories'
         self.acurl = 'https://api.stlouisfed.org/fred/category'
         self.csurl = 'https://api.stlouisfed.org/fred/category/series'
+        self.ssurl = 'https://api.stlouisfed.org/fred/series'
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.rapi_key = 'YOURAPIKEYGOESHERE'
@@ -274,7 +275,7 @@ class FREDcategories():
         if not sid:
             print('getseriesforsid: sid required', file=stderr)
             sys.exit(1)
-        url = '%s?series_id=%s&api_key=%s' % (self.surl, sid,
+        url = '%s?series_id=%s&api_key=%s' % (self.ssurl, sid,
                                               self.api_key)
         resp = self.query(url)
         rstr = resp.read().decode('utf-8')

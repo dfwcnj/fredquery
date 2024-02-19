@@ -11,7 +11,7 @@ These scripts assume that the api_key is available through the FRED_API_KEY
 environmental variable. Each script including fredsources
 script will collect basic data for its type. For example
 fredcategories.py will collect data for all its categories. They can
-also collect series and obsrevations(timeseries) for its type.
+also collect series and observations(timeseries) for its type.
 </p〉
 
 
