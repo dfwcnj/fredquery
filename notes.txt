@@ -33,11 +33,6 @@ https://fred.stlouisfed.org/docs/api/fred/
 # mine html of this page to find series for a category
 https://fred.stlouisfed.org/categories
 https://api.stlouisfed.org/fred/category?category_id=$cid&api_key=$FREDAPI
-https://fred.stlouisfed.org/categories/ links to urls like the following
-https://fred.stlouisfed.org/categories/23
-https://fred.stlouisfed.org/categories/5
-https://fred.stlouisfed.org/categories/46
-https://fred.stlouisfed.org/categories/33060
 
 # releases
 # mine html of these pages to find series for a release
@@ -45,12 +40,7 @@ https://fred.stlouisfed.org/releases
 https://fred.stlouisfed.org/releases?pageID=[1-7]
 # Z.1 financial account
 https://fred.stlouisfed.org/release?rid=52
-https://fred.stlouisfed.org/release?rid=221
-https://fred.stlouisfed.org/release?rid=435
-https://fred.stlouisfed.org/release?rid=433
 https://fred.stlouisfed.org/release?rid=433&t=death&ob=pv&od=desc
-https://fred.stlouisfed.org/release?rid=99
-https://fred.stlouisfed.org/release?rid=263
 # consumer credit
 https://www.federalreserve.gov/releases/g19/
 
@@ -66,12 +56,7 @@ https://fred.stlouisfed.org/release/tables?rid=52&eid=809858
 https://fred.stlouisfed.org/category/series
 https://fred.stlouisfed.org/release/series
 https://fred.stlouisfed.org/tags/series
-https://fred.stlouisfed.org/series/CDSP
-https://fred.stlouisfed.org/series/TDSP
-https://fred.stlouisfed.org/series/CCLACBW027SBOG
-https://fred.stlouisfed.org/series/M2SL
 https://fred.stlouisfed.org/series/GDP
-https://fred.stlouisfed.org/series/MSPUS
 https://fred.stlouisfed.org/series/FEDFUNDS?cid=118
 https://fred.stlouisfed.org/series/GFDEGDQ188S
 
@@ -107,3 +92,14 @@ ihttps://alfred.stlouisfed.org/
 
 # FRASER
 https://fraser.stlouisfed.org/api-documentation/oai-pmh#get-/Identify
+
+
+# blurb
+
+I have created some command line tools that I hope makes using the
+stlouisfed.org FRED time series data easier. It is written in Python and
+can be installed with the command 'pip install fredquery'. Source code
+can be retrieved at 'https://github.com/dfwcnj/fredquery'. It provideѕ
+five commands corresponding to FRED organization: fredcategories,
+fredreleases, fredseries, fredsources, and fredtags. I am looking for
+feedback concerning usefulness, defects, or improvements.

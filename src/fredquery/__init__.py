@@ -5,6 +5,7 @@
 
 import fredquery.fredcategories
 import fredquery.fredreleases
+import fredquery.fredseries
 import fredquery.fredtags
 import fredquery.fredsources
 

@@ -37,6 +37,7 @@ class FREDcategories():
                                   file=sys.stderr)
             sys.exit()
         self.npages  = 7
+        self.verbose = False
         self.pause   = 2 # number of seconds to pause
         self.retries = 5 # number of query retries
         self.categorydict= {}
@@ -77,6 +78,7 @@ class FREDcategories():
         url - content to retrieve
         """
         count = 0
+        paws = self.pause
         while True:
             try:
                 req = urllib.request.Request(url)
@@ -87,7 +89,9 @@ class FREDcategories():
                       file=sys.stderr),
                 count = count + 1
                 if count < self.retries:
-                    time.sleep(self.pause)
+                    print('waiting %d seconds' % (paws), file=sys.stderr)
+                    time.sleep(paws)
+                    paws = paws * 2
                     continue
                 sys.exit(1)
 
