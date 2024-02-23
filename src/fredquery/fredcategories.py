@@ -264,11 +264,11 @@ class FREDcategories():
             ka = adict.keys()
             id = adict['id']
             self.seriesdict[id]={}
+            for k in ka:
+                self.seriesdict[id][k] = adict[k]
             url='%s?series_id=%s&api_key=%s' % (self.sourl, adict['id'],
                 self.rapi_key)
             self.seriesdict[id]['url'] = url
-            for k in ka:
-                self.seriesdict[id][k] = adict[k]
 
     def getseriesforsid(self, sid):
         """ getseriesforsid(sid)
@@ -314,6 +314,7 @@ class FREDcategories():
         report links to data for categories
         ofp - file pointer to output file
         """
+        print("'category','category_id'", file=ofp)
         for k in self.categorydict.keys():
             nm = self.categorydict[k]['name']
             print("'%s','%s'" % (nm, k), file=ofp )
