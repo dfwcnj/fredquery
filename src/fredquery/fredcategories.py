@@ -28,7 +28,7 @@ class FREDcategories():
         self.ssurl = 'https://api.stlouisfed.org/fred/series'
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
-        self.rapi_key = 'YOURAPIKEYGOESHERE'
+        self.rapi_key = '$FRED_API_KEY'
         if 'FRED_API_KEY' in os.environ:
             self.api_key = os.environ['FRED_API_KEY']
         else:

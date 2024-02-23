@@ -35,7 +35,7 @@ class FREDreleases():
         # url for getting a FRED api_key
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         # probably a bad idea to put your real api_key in a report
-        self.rapi_key = 'YOURAPIKEYGOESHERE'
+        self.rapi_key = '$FRED_API_KEY'
         if 'FRED_API_KEY' in os.environ:
             self.api_key = os.environ['FRED_API_KEY']
         else:

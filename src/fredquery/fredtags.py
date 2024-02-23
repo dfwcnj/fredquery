@@ -29,7 +29,7 @@ class FREDtags():
         self.npages = 30
         self.tagdict = {}
         self.seriesdict = {}
-        self.rapi_key = 'YOURAPIKEYGOESHERE'
+        self.rapi_key = '$FRED_API_KEY'
         if 'FRED_API_KEY' in os.environ:
             self.api_key = os.environ['FRED_API_KEY']
         else:

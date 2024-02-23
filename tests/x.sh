@@ -14,7 +14,7 @@ set -x
 
 
 fredreleases --releases --file /tmp/releases.csv
-fredreleases --series --releaseid 9 --file /tmp/rseries9.csv
+fredreleases --series --releaseid 365 --file /tmp/rseries365.csv
 fredreleases --series --seriesid ALLQ13A12MINR --file \
      /tmp/ALLQ13A12MINR_series.csv
 fredreleases --observations --directory /tmp --releaseid 9

@@ -98,8 +98,10 @@ https://fraser.stlouisfed.org/api-documentation/oai-pmh#get-/Identify
 
 I have created some command line tools that I hope makes using the
 stlouisfed.org FRED time series data easier. It is written in Python and
-can be installed with the command 'pip install fredquery'. Source code
+can be installed with the command 'pip install fredquery'. It has been
+tested on a mac laptop and a raspberry pi 5 device. Source code
 can be retrieved at 'https://github.com/dfwcnj/fredquery'. It provideѕ
 five commands corresponding to FRED organization: fredcategories,
 fredreleases, fredseries, fredsources, and fredtags. I am looking for
 feedback concerning usefulness, defects, or improvements.
+
