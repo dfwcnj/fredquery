@@ -14,6 +14,8 @@ import time
 import xml
 from xml.etree import ElementTree as ET
 
+from fredquery import common
+
 class FREDtags():
     def __init__(self):
         """ FREDtags
@@ -44,56 +46,7 @@ class FREDtags():
         self.sid     = None
         self.observationsdict = {}
 
-    def setpause(self, secs):
-        """setpause(secs)
-
-        change the amount of delay between certain operations to
-        try to avoit stlouisfed.org rate limits
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setpause(%s): %s' % (secs, e) )
-            return
-        self.pause = si
-
-    def setretries(self, secs):
-        """setretries(secs)
-
-        change the max number of query retries
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setretries(%s): %s' % (secs, e) )
-            return
-        self.retries = si
-
-    def query(self, url=None):
-        """ query(url)·
-·
-        retrieve a url
-        url - content to retrieve
-        """
-        count = 0
-        paws = self.pause
-        while True:
-            try:
-                req = urllib.request.Request(url)
-                resp = urllib.request.urlopen(req)
-                return resp
-            except urllib.error.URLError as e:
-                print("Error %s(%s): %s" % ('query', url, e.reason),
-                      file=sys.stderr),
-                count = count + 1
-                if count < self.retries:
-                    print('waiting %d seconds' % (paws), file=sys.stderr)
-                    time.sleep(paws)
-                    paws = paws * 2
-                    continue
-                sys.exit(1)
+        self.uq = common._URLQuery()
 
     def reportobservations(self, odir):
         """
@@ -149,7 +102,7 @@ class FREDtags():
         for sid in self.seriesdict:
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             self.getseriesobservationdata(sid, rstr)
@@ -217,7 +170,7 @@ class FREDtags():
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
             units = self.seriesdict[sid]['units']
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             obsa = self.returnseriesobservationdata(sid, units, rstr)
@@ -269,7 +222,7 @@ class FREDtags():
             print('getseriesfromsid: sid required', file=sys.stderr)
             sys.exit(1)
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -281,7 +234,7 @@ class FREDtags():
             print('getseriesfromtnm: tnm required', file=sys.stderr)
             sys.exit(1)
         url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, tnm, self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -295,7 +248,7 @@ class FREDtags():
                      file=sys.stderr)
                continue
             url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, k, self.api_key)
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             self.getseriesdata(k, rstr)
             time.sleep(1)
@@ -330,7 +283,7 @@ class FREDtags():
 
     def gettags(self):
         url = '%s?api_key=%s' % (self.turl, self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.gettagdata(rstr)
 

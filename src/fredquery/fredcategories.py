@@ -15,6 +15,8 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
+from fredquery import common
+
 class FREDcategories():
     """ FREDcategories
 
@@ -44,56 +46,7 @@ class FREDcategories():
         self.seriesdict = {}
         self.observationsdict = {}
 
-    def setpause(self, secs):
-        """setpause(secs)
-
-        change the amount of delay between certain operations to
-        try to avoit stlouisfed.org rate limits
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setpause(%s): %s' % (secs, e) )
-            return
-        self.pause = si
-
-    def setretries(self, secs):
-        """setretries(secs)
-
-        change the max number of query retries
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setretries(%s): %s' % (secs, e) )
-            return
-        self.retries = si
-
-    def query(self, url=None):
-        """ query(url) 
- 
-        retrieve a url
-        url - content to retrieve
-        """
-        count = 0
-        paws = self.pause
-        while True:
-            try:
-                req = urllib.request.Request(url)
-                resp = urllib.request.urlopen(req)
-                return resp
-            except urllib.error.URLError as e:
-                print("Error %s(%s): %s" % ('query', url, e.reason),
-                      file=sys.stderr),
-                count = count + 1
-                if count < self.retries:
-                    print('waiting %d seconds' % (paws), file=sys.stderr)
-                    time.sleep(paws)
-                    paws = paws * 2
-                    continue
-                sys.exit(1)
+        self.uq = common._URLQuery()
 
     def reportobservations(self, odir):
         """ reportobservations(odir)
@@ -152,7 +105,7 @@ class FREDcategories():
         for sid in self.seriesdict:
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             self.getobservationdata(sid, rstr)
@@ -221,7 +174,7 @@ class FREDcategories():
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
             units = self.seriesdict[sid]['units']
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             obsa = self.returnseriesobservationdata(sid, units, rstr)
@@ -281,7 +234,7 @@ class FREDcategories():
             sys.exit(1)
         url = '%s?series_id=%s&api_key=%s' % (self.ssurl, sid,
                                               self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -292,7 +245,7 @@ class FREDcategories():
         cid - category_id
         """
         url = '%s?category_id=%s&api_key=%s' % (self.csurl, cid, self.api_key)
-        resp=self.query(url)
+        resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -303,7 +256,7 @@ class FREDcategories():
         """
         for cid in self.categorydict.keys():
             url = '%s&api_key=%s' % (self.csurl, cid, self.api_key)
-            resp=self.query(url)
+            resp=self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             self.getseriesdata(rstr)
             time.sleep(1)
@@ -368,7 +321,7 @@ class FREDcategories():
         """
         url = '%s?category_id=%s&api_key=%s' % (self.acurl, cid,
               self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         # print(rstr, file=sys.stderr)
         self.getcategorydata(rstr)
@@ -379,7 +332,7 @@ class FREDcategories():
 
         collect all FRED categories
         """
-        resp = self.query(self.curl)
+        resp = self.uq.query(self.curl)
         rstr = resp.read().decode('utf-8')
         # print(rstr, file=sys.stderr)
         self.getcategorydata(rstr)

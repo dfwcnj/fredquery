@@ -12,6 +12,8 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
+from fredquery import common
+
 class FREDreleases():
 
     def __init__(self):
@@ -51,56 +53,8 @@ class FREDreleases():
         self.sid     = None
         self.observationsdict = {}
 
-    def setpause(self, secs):
-        """setpause(secs)
+        self.uq = common._URLQuery()
 
-        change the amount of delay between certain operations to
-        try to avoit stlouisfed.org rate limits
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setpause(%s): %s' % (secs, e) )
-            return
-        self.pause = si
-
-    def setretries(self, secs):
-        """setretries(secs)
-
-        change the max number of query retries
-        """
-        si = None
-        try:
-            si = int(secs)
-        except Exception as e:
-            print('setretries(%s): %s' % (secs, e) )
-            return
-        self.retries = si
-
-    def query(self, url=None):
-        """ query(url)·
-·
-        retrieve a url
-        url - content to retrieve
-        """
-        count = 0
-        paws = self.pause
-        while True:
-            try:
-                req = urllib.request.Request(url)
-                resp = urllib.request.urlopen(req)
-                return resp
-            except urllib.error.URLError as e:
-                print("Error %s(%s): %s" % ('query', url, e.reason),
-                      file=sys.stderr),
-                count = count + 1
-                if count < self.retries:
-                    print('waiting %d seconds' % (paws), file=sys.stderr)
-                    time.sleep(paws)
-                    paws = paws * 2
-                    continue
-                sys.exit(1)
 
     def reportobservations(self, odir):
         """ reportobservations(odir)
@@ -160,7 +114,7 @@ class FREDreleases():
         for sid in self.seriesdict:
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             self.getseriesobservationdata(sid, rstr)
@@ -228,7 +182,7 @@ class FREDreleases():
             url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
                    self.api_key)
             units = self.seriesdict[sid]['units']
-            resp = self.query(url)
+            resp = self.uq.query(url)
             rstr = resp.read().decode('utf-8')
             # observation data doesn't identify itself
             obsa = self.returnseriesobservationdata(sid, units, rstr)
@@ -281,7 +235,7 @@ class FREDreleases():
             sys.exit(1)
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid,
                                               self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -296,7 +250,7 @@ class FREDreleases():
             sys.exit(1)
         url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
                                            rid, self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getseriesdata(rstr)
 
@@ -311,7 +265,7 @@ class FREDreleases():
             if nurl not in self.seriesdict:
                 url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
                                                k, self.api_key)
-                resp = self.query(url)
+                resp = self.uq.query(url)
                 rstr = resp.read().decode('utf-8')
                 self.getseriesdata(rstr)
                 # trying to avoid dups
@@ -375,7 +329,7 @@ class FREDreleases():
             print('getseriesforrid: rid required', file=stderr)
             sys.exit(1)
         url = '%s?release_id=%s&api_key=%s' % (self.rturl, rid, self.api_key)
-        resp=self.query(url)
+        resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         self.getreleasetabledata(rstr)
 
@@ -431,7 +385,7 @@ class FREDreleases():
         collect all releases
         """
         url = '%s?api_key=%s' % (self.rurl, self.api_key)
-        resp = self.query(url)
+        resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         #  print(rstr)
         self.getreleasedata(rstr)

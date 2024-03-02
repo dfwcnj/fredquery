@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: MIT
 # https://fred.stlouisfed.org/docs/api/fred/
 
-import fredquery.fredcategories
-import fredquery.fredreleases
-import fredquery.fredseries
-import fredquery.fredtags
-import fredquery.fredsources
+import fredquery.common
+#import fredquery.fredcategories
+#import fredquery.fredreleases
+#import fredquery.fredseries
+#import fredquery.fredtags
+#import fredquery.fredsources
 
