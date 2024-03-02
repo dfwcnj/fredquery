@@ -320,7 +320,7 @@ def main():
     argp.add_argument('--series', action='store_true', default=False,
                        help="report series urls for categories collected")
     argp.add_argument('--observations', action='store_true', default=False,
-                       help="report timeseries data for categories")
+                       help="report timeseries data for series")
 
     argp.add_argument('--categories', action='store_true', default=False,
                        help="report categories for this series")
