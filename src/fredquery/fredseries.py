@@ -318,7 +318,7 @@ def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED series')
 
     argp.add_argument('--series', action='store_true', default=False,
-                       help="report series urls for categories collected")
+                       help="report series urls for series_id")
     argp.add_argument('--observations', action='store_true', default=False,
                        help="report timeseries data for series")
 
