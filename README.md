@@ -72,7 +72,7 @@ collect and report stlouisfed.org FRED series<br/>
 options:<br/>
   -h, --help            show this help message and exit<br/>
   --series              report series urls for categories collected<br/>
-  --observations        report timeseries data for categories<br/>
+  --observations        report timeseries data for this series<br/>
   --categories          report categories for this series<br/>
   --releases            report categories for this series<br/>
   --sources             report sources for this series<br/>
