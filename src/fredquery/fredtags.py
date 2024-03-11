@@ -14,7 +14,12 @@ import time
 import xml
 from xml.etree import ElementTree as ET
 
-from fredquery import common
+try:
+    from fredquery import query
+    from fredquery import dict2html
+except ImportError as e:
+    import query
+    import dict2html
 
 class FREDtags():
     def __init__(self):
@@ -46,7 +51,8 @@ class FREDtags():
         self.sid     = None
         self.observationsdict = {}
 
-        self.uq = common._URLQuery()
+        self.uq = query._URLQuery()
+        self.dh = dict2html.Dict2HTML()
 
     def reportobservations(self, odir):
         """
@@ -253,22 +259,29 @@ class FREDtags():
             self.getseriesdata(k, rstr)
             time.sleep(1)
 
+    def showtags(self):
+        """ showtags()
+
+        show FRED tags in your browser
+        """
+        self.dh.dictshow(self.tagdict, 'FRED Tags')
+
+
     def reporttags(self, ofp):
         """ reporttags - report for all tags collected
         """
         if not ofp: ofp = sys.stderr
         ha = []
+        keys = []
         for tnm in self.tagdict.keys():
-            ka = self.tagdict[tnm].keys()
-            ra = []
-            if len(ha) == 0:
-                for k in ka:
-                    ha.append("'%s'," % k)
-                print(''.join(ha), file=ofp)
-            ra=[]
-            for rk in ka:
-                ra.append("'%s'," % self.tagdict[tnm][rk])
-            print(''.join(ra), file=ofp)
+            row = self.tagdict[tnm]
+            if len(keys) == 0:
+                keys = [k for k in sorted(row.keys() )]
+                hdr = "','".join(keys)
+                print("'%s'" % (hdr), file=ofp )
+            fa = [row[k] for k in keys]
+            rw = "','".join(fa)
+            print("'%s'" % (rw), file=ofp )
 
     def gettagdata(self, rstr):
         """parse the xml for FRED tags
@@ -292,6 +305,8 @@ def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org FRED tags and/or their series')
     argp.add_argument('--tags', action='store_true', default=False,
        help='return tags')
+    argp.add_argument('--showtags', action='store_true', default=False,
+       help='show tags in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series for a tag_id or for a series_id')
     argp.add_argument('--observations', action='store_true', default=False,
@@ -353,7 +368,12 @@ def main():
         ft.reportseries(ofp=fp)
     elif args.tags:
         ft.gettags()
-        ft.reporttags(ofp=fp)
+        if args.showtags:
+            ft.showtags()
+            if fp != sys.stdout:
+                ft.reporttags(ofp=fp)
+        else:
+            ft.reporttags(ofp=fp)
 
 if __name__ == '__main__':
     main()

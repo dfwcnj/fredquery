@@ -11,8 +11,15 @@ import time
 import urllib.request
 import xml
 from xml.etree import ElementTree as ET
+import webbrowser
 
-from fredquery import common
+try:
+    from fredquery import query
+    from fredquery import dict2html
+except ImportError as e:
+    import query
+    import dict2html
+
 
 class FREDreleases():
 
@@ -53,7 +60,8 @@ class FREDreleases():
         self.sid     = None
         self.observationsdict = {}
 
-        self.uq = common._URLQuery()
+        self.uq = query._URLQuery()
+        self.dh = dict2html.Dict2HTML()
 
 
     def reportobservations(self, odir):
@@ -341,6 +349,13 @@ class FREDreleases():
         for rid in self.releasedict.keys():
             self.getreleasetable(rid)
 
+    def showreleases(self):
+        """ showreleases()
+
+        show stlouisfed.org FRED releases as a table in your browser
+        """
+        self.dh.dictshow(self.releasedict, 'FRED Releases')
+
     def reportreleases(self, ofp):
         """reportreleases(ofp)
 
@@ -404,6 +419,8 @@ def main():
        help='a release_id identifies a FRED release')
     argp.add_argument('--seriesid', required=False,
        help='a series_id identifies a FRED series')
+    argp.add_argument('--showreleases', action='store_true', default=False,
+       help='show releases in your browser')
 
     argp.add_argument('--file', help="path to an output filename\n\
             if just a filename and--directory is not provided\
@@ -457,7 +474,12 @@ def main():
         fr.reportseries(ofp=fp)
     elif args.releases:
         fr.getreleases()
-        fr.reportreleases(ofp=fp)
+        if args.showreleases:
+            fr.showreleases()
+            if fp != sys.stdout:
+                fr.reportreleases(ofp=fp)
+        else:
+                fr.reportreleases(ofp=fp)
 
 if __name__ == '__main__':
     main()

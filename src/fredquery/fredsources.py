@@ -13,7 +13,12 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
-from fredquery import common
+try:
+    from fredquery import query
+    from fredquery import dict2html
+except ImportError as e:
+    import query
+    import dict2html
 
 class FREDsources():
 
@@ -54,7 +59,8 @@ class FREDsources():
         self.sid     = None
         self.rid     = None
 
-        self.uq = common._URLQuery()
+        self.uq = query._URLQuery()
+        self.dh = dict2html.Dict2HTML()
 
     def returnseriesobservationdata(self, sid, units, rstr):
         """ returnseriesobservationdata(sid, units, rstr)
@@ -236,6 +242,13 @@ class FREDsources():
             self.getreleasedata(sid, rstr)
             time.sleep(1)
 
+    def showsources(self):
+        """ showsources()
+
+        show the sources in your browser
+        """
+        self.dh.dictshow(self.sourcedict, 'FRED Sources')
+
     def reportsources(self, ofp):
         """reportsources(ofp)
 
@@ -244,18 +257,16 @@ class FREDsources():
         """
         if not ofp: ofp=sys.stdout
         ha = []
+        keys = []
         for id in self.sourcedict.keys():
-            ka =  self.sourcedict[id].keys()
-            # header
-            if len(ha) == 0:
-                for k in ka:
-                    ha.append("'%s'," % k)
-                print(''.join(ha), file=ofp)
-            # record
-            ra    = []
-            for k in ka:
-                ra.append("'%s'," % self.sourcedict[id][k])
-            print(''.join(ra), file=ofp)
+            row = self.sourcedict[id]
+            if len(keys) == 0:
+                keys = [k for k in sorted(row.keys() )]
+                hdr = "','".join(keys)
+                print("'%s'" % (hdr), file=ofp )
+            fa = [row[k] for k in keys]
+            rw = "','".join(fa)
+            print("'%s'" % (rw), file=ofp )
 
     def getsourcedata(self, rstr):
         """ sourcedata(rstr)
@@ -301,6 +312,8 @@ def main():
 
     argp.add_argument('--sources', action='store_true', default=False,
        help='return sources')
+    argp.add_argument('--showsources', action='store_true', default=False,
+       help='show sources in your browser')
     argp.add_argument('--releases', action='store_true', default=False,
        help='return releases for a source_id')
     argp.add_argument('--observations', action='store_true', default=False,
@@ -358,7 +371,12 @@ def main():
             fs.getandreportobservations(odir=args.directory)
     elif args.sources:
         fs.getsources()
-        fs.reportsources(ofp=fp)
+        if args.showsources:
+            fs.showsources()
+            if fp != sys.stdout:
+                fs.reportsources(ofp=fp)
+        else:
+            fs.reportsources(ofp=fp)
     elif args.releases and args.sourceid:
         fs.getsource(sid = args.sourceid)
         fs.getreleases()

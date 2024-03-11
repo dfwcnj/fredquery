@@ -16,7 +16,10 @@ import urllib.request
 import xml
 from xml.etree import ElementTree as ET
 
-from fredquery import common
+try:
+    from fredquery import query
+except ImportError as e:
+    import query
 
 class FREDseries():
     """ FREDseries
@@ -52,7 +55,7 @@ class FREDseries():
         self.tagdict = {}
         self.updatedict = {}
 
-        self.uq = common._URLQuery()
+        self.uq = query._URLQuery()
 
     def getobservationdata(self, sid, rstr):
         """getobservationdata(sid, rstr)
