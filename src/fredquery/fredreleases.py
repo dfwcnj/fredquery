@@ -197,6 +197,13 @@ class FREDreleases():
             self.reportobservation(sid, units, obsa, odir)
             time.sleep(1)
 
+    def showseries(self):
+        """ showseries()
+
+        display series list for a release_id in your browser
+        """
+        self.dh.dictshow(self.seriesdict, 'FRED Release %s series' % self.rid)
+
     def reportseries(self, ofp):
         """ reportseries(ofp)
 
@@ -204,17 +211,21 @@ class FREDreleases():
         ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
-        ha = []
-        for id in self.seriesdict:
-            ka = self.seriesdict[id].keys()
-            if len(ha) == 0:
-                for f in ka:
-                    ha.append("'%s'," % (f) )
-                print(''.join(ha), file=ofp)
-            ra=[]
-            for k in ka:
-                ra.append("'%s'," % (self.seriesdict[id][k]) )
-            print(''.join(ra), file=ofp)
+
+        hdr = None
+        keys = []
+        for k in self.seriesdict.keys():
+            row = self.seriesdict[k]
+            if len(keys) == 0:
+                keys = [k for k in sorted(row.keys() )]
+                hdr = "','".join(keys)
+                print("'%s'" % (hdr), file=ofp )
+            for k in keys:
+                if k not in row:
+                    row[k] = 'no %s' % (k)
+            fa = [row[k] for k in keys]
+            rw = "','".join(fa)
+            print("'%s'" % (rw), file=ofp )
 
     def getseriesdata(self, rstr):
         """ getseriesdata(rstr)
@@ -256,6 +267,7 @@ class FREDreleases():
         if not rid:
             print('getseriesforrid: rid required', file=stderr)
             sys.exit(1)
+        self.rid = rid
         url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
                                            rid, self.api_key)
         resp = self.uq.query(url)
@@ -336,6 +348,7 @@ class FREDreleases():
         if not rid:
             print('getseriesforrid: rid required', file=stderr)
             sys.exit(1)
+        self.rid = rid
         url = '%s?release_id=%s&api_key=%s' % (self.rturl, rid, self.api_key)
         resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
@@ -410,8 +423,12 @@ def main():
 
     argp.add_argument('--releases', action='store_true', default=False,
        help='return releases')
+    argp.add_argument('--showreleases', action='store_true', default=False,
+       help='show releases in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series by series_id or by release_id')
+    argp.add_argument('--showseries', action='store_true', default=False,
+       help='show series for a  release_id in your browser')
     argp.add_argument('--observations', action='store_true', default=False,
        help='return timeseries for all series collected')
 
@@ -419,8 +436,6 @@ def main():
        help='a release_id identifies a FRED release')
     argp.add_argument('--seriesid', required=False,
        help='a series_id identifies a FRED series')
-    argp.add_argument('--showreleases', action='store_true', default=False,
-       help='show releases in your browser')
 
     argp.add_argument('--file', help="path to an output filename\n\
             if just a filename and--directory is not provided\
@@ -468,7 +483,12 @@ def main():
             fr.getandreportobservations(odir=args.directory)
     elif args.series and args.releaseid:
         fr.getseriesforrid(rid=args.releaseid)
-        fr.reportseries(ofp=fp)
+        if args.showseries:
+            fr.showseries()
+            if fp != sys.stdout:
+                fr.reportseries(ofp=fp)
+            else:
+                fr.reportseries(ofp=fp)
     elif args.series and args.seriesid:
         fr.getseriesforsid(sid=args.seriesid)
         fr.reportseries(ofp=fp)
@@ -479,7 +499,7 @@ def main():
             if fp != sys.stdout:
                 fr.reportreleases(ofp=fp)
         else:
-                fr.reportreleases(ofp=fp)
+            fr.reportreleases(ofp=fp)
 
 if __name__ == '__main__':
     main()

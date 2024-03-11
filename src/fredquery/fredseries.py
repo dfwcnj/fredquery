@@ -45,8 +45,6 @@ class FREDseries():
                                   file=sys.stderr)
             sys.exit()
         self.verbose = False
-        self.pause   = 2 # number of seconds to pause
-        self.retries = 5 # number of query retries
         self.seriesdict = {}
         self.observationsdict = {}
         self.categorydict = {}

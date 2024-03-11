@@ -34,6 +34,7 @@ class FREDtags():
         self.sourl = '%s/observations' % self.surl
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
         self.npages = 30
+        self.tnm = None
         self.tagdict = {}
         self.seriesdict = {}
         self.rapi_key = '$FRED_API_KEY'
@@ -183,6 +184,13 @@ class FREDtags():
             self.reportobservation(sid, units, obsa, odir)
             time.sleep(1)
 
+    def showseries(self):
+        """ showseries()
+
+        show series for a tagname in your browser
+        """
+        self.dh.dictshow(self.seriesdict, 'FRED Tagname %s series' % self.tnm)
+
     def reportseries(self, ofp):
         """ reportseries - report series for all collected
         """
@@ -227,6 +235,7 @@ class FREDtags():
         if not sid:
             print('getseriesfromsid: sid required', file=sys.stderr)
             sys.exit(1)
+        self.sid = sid
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
@@ -239,6 +248,7 @@ class FREDtags():
         if not tnm:
             print('getseriesfromtnm: tnm required', file=sys.stderr)
             sys.exit(1)
+        self.tnm = tnm
         url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, tnm, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
@@ -309,6 +319,8 @@ def main():
        help='show tags in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series for a tag_id or for a series_id')
+    argp.add_argument('--showseries', action='store_true', default=False,
+       help='show series for a tagname in your browser')
     argp.add_argument('--observations', action='store_true', default=False,
                        help="report timeseries data for tags")
 
@@ -362,7 +374,12 @@ def main():
             ft.getandreportobservations(odir=args.directory)
     elif args.series and args.tagname:
         ft.getseriesfortnm(tnm=args.tagname)
-        ft.reportseries(ofp=fp)
+        if args.showseries:
+            ft.showseries()
+            if fp != sys.stdout:
+                ft.reportseries(ofp=fp)
+        else:
+            ft.reportseries(ofp=fp)
     elif args.series and args.seriesid:
         ft.getseriesforsid(sid=args.seriesid)
         ft.reportseries(ofp=fp)
