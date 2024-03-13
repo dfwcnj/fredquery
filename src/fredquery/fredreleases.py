@@ -15,11 +15,12 @@ import webbrowser
 
 try:
     from fredquery import query
-    from fredquery import dict2html
+    from fredquery import aa2html
+    from fredquery import xmlstr2aa
 except ImportError as e:
     import query
-    import dict2html
-
+    import aa2html
+    import xmlstr2aa
 
 class FREDreleases():
 
@@ -31,7 +32,7 @@ class FREDreleases():
         """
         # fred releases
         self.rurl = 'https://api.stlouisfed.org/fred/releases'
-        self.releasedict = {}
+        self.releasesdict = {}
         # fred release tables
         self.rturl = 'https://api.stlouisfed.org/fred/release/tables'
         self.releasetabledict = {}
@@ -53,131 +54,32 @@ class FREDreleases():
                                   file=sys.stderr)
             sys.exit()
         self.npages  = 7
-        self.verbose = False
-        self.pause   = 2 # number of seconds to pause
-        self.retries = 5 # number of query retries
+        self.verbose = True
         self.rid     = None
         self.sid     = None
         self.observationsdict = {}
 
         self.uq = query._URLQuery()
-        self.dh = dict2html.Dict2HTML()
+        self.ah = aa2html._AA2HTML()
+        self.xa = xmlstr2aa._XMLStr2AA()
 
 
-    def reportobservations(self, odir):
-        """ reportobservations(odir)
-
-        report category timeseries
-        rstr - decoded response of a urllib request
-        """
-        if not odir:
-            print('no output directory provided', file=sys.stderr)
-            sys.exit(0)
-        for sid in self.observationsdict.keys():
-            sfn=os.path.join('%s/%s_%s.csv' % (odir,
-                    sid, self.seriesdict[sid]['units']) )
-            fn = ''.join(sfn.split() )
-            with open(fn, 'w') as fp:
-                ha=[]
-                for obs in self.observationsdict[sid]:
-                    ka=obs.keys()
-                    if len(ha) == 0:
-                        for f in ka:
-                            if f == 'value':
-                                sv = '%s_%s' % (sid,
-                                      self.seriesdict[sid]['units'])
-                                ha.append("'%s'" % ''.join(sv.split()) )
-                            else:
-                                ha.append("'%s'" % f)
-                        print(''.join(ha), file=fp )
-                    ra = []
-                    for rk in obs.keys():
-                        ra.append("'%s'," % (obs[rk]) )
-                    print(''.join(ra), file=fp )
-
-
-    def getseriesobservationdata(self, sid, rstr):
-        """ getseriesobservationdata(sid, rstr)
-
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            for k in ka:
-                obs[k] = adict[k]
-            self.observationsdict[sid].append(obs)
-
-    def getobservations(self):
-        """ getobservations()
-
-        time series data for all series collected
-        """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            self.getseriesobservationdata(sid, rstr)
-            time.sleep(1)
-
-    def returnseriesobservationdata(self, sid, units, rstr):
-        """ returnseriesobservationdata(sid, units, rstr)
-
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        units - each observation is in this unit
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        obsa = []
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            obs['sid']   = sid
-            obs['units'] = units
-            for k in ka:
-                obs[k] = adict[k]
-            obsa.append(obs)
-        return obsa
-
-    def reportobservation(self, sid, units, obsa, odir):
-        """ reportobservation(sid, obsa, odir)
+    def reportobservation(self, id, units, obsa, odir):
+        """ reportobservation(id, obsa, odir)
 
         report observations for a series_id
-        sid - series_id
+        id - series_id
         obsa - list of observations for a series_id
         odir - directory for storing observations
         """
-        sfn = os.path.join('%s/%s_%s.csv' % (odir, sid, units) )
-        # units can contain spaces
-        fn = ''.join(sfn.split() )
-        with open(fn, 'w') as fp:
-            ha=[]
-            for obs in obsa:
-                ka = obs.keys()
-                if len(ha) == 0:
-                    for f in ka:
-                        if f == 'value':
-                            sv = '%s_%s' % (sid, units)
-                            ha.append("'%s'" % ''.join(sv.split()) )
-                        else:
-                            ha.append("'%s'" % f)
-                    print(''.join(ha), file=fp)
-                ra=[]
-                for rk in obs.keys():
-                    ra.append("'%s'," % (obs[rk]) )
-                print(''.join(ra), file=fp)
+        # remove spaces and .
+        units = re.sub('[ .]', '', units)
+        fn = '%s_%s.csv' % (id, units)
+        fpath = os.path.join(odir, fn)
+        with open(fpath, 'w') as fp:
+            for row in obsa:
+                rw = "','".join(row)
+                print("'%s'" % (rw), file=fp )
 
     def getandreportobservations(self, odir):
         """ getandreportobservations()
@@ -186,62 +88,41 @@ class FREDreleases():
         series collected
         observation = time series data
         """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+        for rid in self.seriesdict.keys():
+            aa = self.seriesdict[rid]
+            assert aa[0][8] == 'units'
+            keys = aa[0]
+            for i in range(1, len(aa) ):
+                a = aa[i]
+                id = a[0]
+                units = a[8]
+                url = '%s?series_id=%s&api_key=%s' % (self.sourl, id,
                    self.api_key)
-            units = self.seriesdict[sid]['units']
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            obsa = self.returnseriesobservationdata(sid, units, rstr)
-            self.reportobservation(sid, units, obsa, odir)
-            time.sleep(1)
+                resp = self.uq.query(url)
+                rstr = resp.read().decode('utf-8')
+                obsa = self.xa.xmlstr2aa(rstr)
+                self.reportobservation(id, units, obsa, odir)
+                time.sleep(1)
 
-    def showseries(self):
-        """ showseries()
+    def showseriesforid(self, id):
+        """ showseriesforid(d)
 
         display series list for a release_id in your browser
+        id release_id or series_id
         """
-        self.dh.dictshow(self.seriesdict, 'FRED Release %s series' % self.rid)
+        self.ah.aashow(self.seriesdict[id], '%s series' % id)
 
-    def reportseries(self, ofp):
-        """ reportseries(ofp)
+    def reportseriesdorid(self, id, ofp):
+        """ reportseriesdorid(id, ofp)
 
-        report all series collected
+        report for a release_id or series_id 
+        id = release_id or series_id
         ofp - file pointer to which to write
         """
-        if not ofp: ofp=sys.stdout
-
-        hdr = None
-        keys = []
-        for k in self.seriesdict.keys():
-            row = self.seriesdict[k]
-            if len(keys) == 0:
-                keys = [k for k in sorted(row.keys() )]
-                hdr = "','".join(keys)
-                print("'%s'" % (hdr), file=ofp )
-            for k in keys:
-                if k not in row:
-                    row[k] = 'no %s' % (k)
-            fa = [row[k] for k in keys]
-            rw = "','".join(fa)
-            print("'%s'" % (rw), file=ofp )
-
-    def getseriesdata(self, rstr):
-        """ getseriesdata(rstr)
-
-        collect the data for a series for a release
-        rstr - response string for the api query
-        """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            id = child.attrib['id']
-            ka = child.attrib.keys()
-            self.seriesdict[id] = {}
-            for k in ka:
-                self.seriesdict[id][k] = child.attrib[k]
-            self.seriesdict[id]['url'] =\
-              '%s?series_id=%s&api_key=%s' % (self.sourl, id, self.rapi_key)
+        aa = self.seriesdict[id]
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
     def getseriesforsid(self, sid):
         """ getseriesforsid(sid)
@@ -256,7 +137,8 @@ class FREDreleases():
                                               self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        self.seriesdict[sid] = aa
 
     def getseriesforrid(self, rid):
         """ getseriesforrid(rid)
@@ -272,7 +154,13 @@ class FREDreleases():
                                            rid, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        aa[0].append('url')
+        for i in range(1, len(aa) ):
+            url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.rsurl,
+                     aa[i][0])
+            aa[i].append(url)
+        self.seriesdict[rid] = aa
 
     def getseries(self):
         """ getseries()
@@ -280,94 +168,20 @@ class FREDreleases():
         get all series for all releases collected
         """
         # a series is associated with a release
-        for k in self.releasedict.keys():
+        for rid in self.releasesdict.keys():
             nurl = '%s?release_id=%s' % (self.rsurl, rid)
-            if nurl not in self.seriesdict:
-                url = '%s?release_id=%s&api_key=%s' % (self.rsurl,
-                                               k, self.api_key)
-                resp = self.uq.query(url)
-                rstr = resp.read().decode('utf-8')
-                self.getseriesdata(rstr)
-                # trying to avoid dups
-                self.seriesdict[nurl] = 1
+            # trying to avoid dups
+            if rid not in self.seriesdict:
+                self.getseriesforrid(rid)
                 time.sleep(1)
-
-    # XXX nested organization - csv representation doesn't make sense
-    # def reportreleasetables(self, ofp):
-
-    # XXX nested organization - csv representation doesn't make sense
-    # XXX finish me
-#    def getreleasetabledata(self, rstr):
-#        """ getreleasetabledata - collect data for a release table
-#            NOT TESTED
-#            rstr - response string for the api query
-#
-#        """
-#        xroot = ET.fromstring(rstr)
-#        rid = None
-#        nm  = None
-#        for child in xroot:
-#            sid = None
-#            eid = None
-#            if child.tag == 'release_id':
-#                rid = child.text
-#                self.releasetabledict[rid]={}
-#                continue
-#            elif child.tag == 'name':
-#                self.releasetabledict[rid]['name']=child.text
-#                continue
-#            elif child.tag == 'element_id':
-#                self.releasetabledict[rid]['element_id']=child.text
-#                continue
-#            elif child.tag == 'element':
-#                self.releasetabledict[rid]['elements']=[]
-#                elementdict={}
-#                for gchild in child:
-#                    if gchild.tag == 'children':
-#                        elementdict['children'] = []
-#                        childdict = {}
-#                        for ggchild in gchild:
-#                            if ggchild.text != None:
-#                                childdict[gchild.tag] = ggchild.text
-#                                continue
-#                        elementdict['children'].append(childdict)
-#                    elif gchild.text != None:
-#                        elementdict[gchild.tag] = gchild.text
-#                        continue
-#                self.releasetabledict[rid]['elements'].append(elementdict)
-#            else:
-#                if rid and nm: self.releasetabledict[rid]['name'] = nm
-#                if rid and eid: self.releasetabledict[rid]['element_id'] = eid
-
-    def getreleasetable(self, rid):
-        """ getreleasetable(rid)
-
-        get a release table fir a release_id
-        rid - release_id
-        """
-        if not rid:
-            print('getseriesforrid: rid required', file=stderr)
-            sys.exit(1)
-        self.rid = rid
-        url = '%s?release_id=%s&api_key=%s' % (self.rturl, rid, self.api_key)
-        resp=self.uq.query(url)
-        rstr = resp.read().decode('utf-8')
-        self.getreleasetabledata(rstr)
-
-    def getreleasetables(self):
-        """ getreleasetables()
-
-        get release tables for all releases collected
-        """
-        for rid in self.releasedict.keys():
-            self.getreleasetable(rid)
 
     def showreleases(self):
         """ showreleases()
 
         show stlouisfed.org FRED releases as a table in your browser
         """
-        self.dh.dictshow(self.releasedict, 'FRED Releases')
+        for k in self.releasesdict.keys():
+            self.ah.aashow(self.releasesdict[k], 'FRED Releases')
 
     def reportreleases(self, ofp):
         """reportreleases(ofp)
@@ -376,36 +190,17 @@ class FREDreleases():
         ofp - file pointer to which to write
         """
         if not ofp: ofp=sys.stdout
-        ha = []
-        for id in self.releasedict.keys():
-            ka =  self.releasedict[id].keys()
+        keys = []
+        for id in self.releasesdict.keys():
             # header
-            if len(ha) == 0:
-                for k in ka:
-                    ha.append("'%s'," % k)
-                print(''.join(ha), file=ofp)
-            # record
-            ra    = []
-            for k in ka:
-                ra.append("'%s'," % self.releasedict[id][k])
-            print(''.join(ra), file=ofp)
-
-    def getreleasedata(self, rstr):
-        """ getreleasedata(rstr)
-
-        collect data on a FRED release
-        rstr - xml response string for the api query
-        """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            id = child.attrib['id']
-            ka = child.attrib.keys()
-            self.releasedict[id] = {}
-            url = '%s?release_id=%s&api_key=%s' % (self.rurl, id, self.rapi_key)
-            for k in ka:
-                self.releasedict[id][k] = child.attrib[k]
-            self.releasedict[id]['url'] = url
-            if 'link' not in ka: self.releasedict[id]['link'] = ''
+            aa = self.releasesdict[id]
+            hdra = aa[0]
+            hdr = "','".join(hdra)
+            print("'%s'" % (hdr), file=ofp)
+            for i in range(1, len(aa) ):
+                rowa = aa[i]
+                row  = "','".join(rowa)
+                print("'%s'" % (row), file=ofp )
 
     def getreleases(self):
         """ getreleases()
@@ -416,7 +211,13 @@ class FREDreleases():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         #  print(rstr)
-        self.getreleasedata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        aa[0].append('url')
+        for i in range(1, len(aa) ):
+            id = aa[i][0]
+            url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.rsurl, id)
+            aa[i].append(url)
+        self.releasesdict[0] = aa
 
 def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED releases and/or their time series')
@@ -427,7 +228,7 @@ def main():
        help='show releases in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series by series_id or by release_id')
-    argp.add_argument('--showseries', action='store_true', default=False,
+    argp.add_argument('--showseriesforid', action='store_true', default=False,
        help='show series for a  release_id in your browser')
     argp.add_argument('--observations', action='store_true', default=False,
        help='return timeseries for all series collected')
@@ -483,15 +284,15 @@ def main():
             fr.getandreportobservations(odir=args.directory)
     elif args.series and args.releaseid:
         fr.getseriesforrid(rid=args.releaseid)
-        if args.showseries:
-            fr.showseries()
+        if args.showseriesforid:
+            fr.showseriesforid(args.releaseid)
             if fp != sys.stdout:
-                fr.reportseries(ofp=fp)
+                fr.reportseriesdorid(args.releaseid, ofp=fp)
             else:
-                fr.reportseries(ofp=fp)
+                fr.reportseriesdorid(args.releaseid, ofp=fp)
     elif args.series and args.seriesid:
         fr.getseriesforsid(sid=args.seriesid)
-        fr.reportseries(ofp=fp)
+        fr.reportseriesdorid(args.seriesid, ofp=fp)
     elif args.releases:
         fr.getreleases()
         if args.showreleases:

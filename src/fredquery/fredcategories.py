@@ -17,10 +17,12 @@ from xml.etree import ElementTree as ET
 
 try:
     from fredquery import query
-    from fredquery import dict2html
+    from fredquery import aa2html
+    from fredquery import xmlstr2aa
 except ImportError as e:
     import query
-    import dict2html
+    import aa2html
+    import xmlstr2aa
 
 class FREDcategories():
     """ FREDcategories
@@ -36,7 +38,7 @@ class FREDcategories():
         self.ssurl = 'https://api.stlouisfed.org/fred/series'
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
-        self.rapi_key = '$FRED_API_KEY'
+        self.rapi_key = 'FRED_API_KEY'
         if 'FRED_API_KEY' in os.environ:
             self.api_key = os.environ['FRED_API_KEY']
         else:
@@ -53,122 +55,25 @@ class FREDcategories():
         self.observationsdict = {}
 
         self.uq = query._URLQuery()
-        self.dh = dict2html.Dict2HTML()
+        self.ah = aa2html._AA2HTML()
+        self.xa = xmlstr2aa._XMLStr2AA()
 
-    def reportobservations(self, odir):
-        """ reportobservations(odir)
-
-        report category timeseries
-        odir - directory that will hold the output
-        """
-        if not odir:
-            print('no output directory provided', file=sys.stderr)
-            sys.exit(0)
-        for sid in self.observationsdict.keys():
-            sfn=os.path.join('%s/%s_%s.csv' % (odir,
-                    sid, self.seriesdict[sid]['units']) )
-            fn = ''.join(sfn.split() )
-            with open(fn, 'w') as fp:
-                ha=[]
-                for obs in self.observationsdict[sid]:
-                    ka=obs.keys()
-                    if len(ha) == 0:
-                        for f in ka:
-                            if f == 'value':
-                                sv = '%s_%s' % (sid,
-                                      self.seriesdict[sid]['units'])
-                                ha.append("'%s'" % ''.join(sv.split()) )
-                            else:
-                                ha.append("'%s'" % f)
-                        print(''.join(ha), file=fp )
-                    ra = []
-                    for rk in obs.keys():
-                        ra.append("'%s'," % (obs[rk]) )
-                    print(''.join(ra), file=fp )
-
-
-    def getobservationdata(self, sid, rstr):
-        """getobservationdata(sid, rstr)
-
-        parse the observation xml
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            for k in ka:
-                obs[k] = adict[k]
-            self.observationsdict[sid].append(obs)
-
-    def getobservations(self):
-        """ getobservations()
-
-        time observation(timeseries) data for all series collected
-        """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            self.getobservationdata(sid, rstr)
-            time.sleep(1)
-
-
-    def returnseriesobservationdata(self, sid, units, rstr):
-        """ returnseriesobservationdata(sid, units, rstr)
-
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        units - each observation is in this unit
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        obsa = []
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            obs['sid']   = sid
-            obs['units'] = units
-            for k in ka:
-                obs[k] = adict[k]
-            obsa.append(obs)
-        return obsa
-
-    def reportobservation(self, sid, units, obsa, odir):
-        """ reportobservation(sid, obsa, odir)
+    def reportobservation(self, obsa, sid, units, odir):
+        """ reportobservation(sid, obsa, sid, units, odir)
 
         report observations for a series_id
-        sid - series_id
         obsa - list of observations for a series_id
+        sid - series_id
+        units - the units of the observation values
         odir - directory for storing observations
         """
-        sfn = os.path.join('%s/%s_%s.csv' % (odir, sid, units) )
-        # units can contain spaces
-        fn = ''.join(sfn.split() )
+        units = ''.join(units.split() )
+        fn = os.path.join('%s/%s_%s.csv' % (odir, sid, units) )
         with open(fn, 'w') as fp:
-            ha=[]
-            for obs in obsa:
-                ka = obs.keys()
-                if len(ha) == 0:
-                    for f in ka:
-                        if f == 'value':
-                            sv = '%s_%s' % (sid, units)
-                            ha.append("'%s'" % ''.join(sv.split()) )
-                        else:
-                            ha.append("'%s'" % f)
-                    print(''.join(ha), file=fp)
-                ra=[]
-                for rk in obs.keys():
-                    ra.append("'%s'," % (obs[rk]) )
-                print(''.join(ra), file=fp)
+            keys=[]
+            for row in obsa:
+                rw = "','".join(row)
+                print("'%s'" % (rw), file=fp )
 
     def getandreportobservations(self, odir):
         """ getandreportobservations()
@@ -177,62 +82,37 @@ class FREDcategories():
         series collected
         observation = time series data
         """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            units = self.seriesdict[sid]['units']
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            obsa = self.returnseriesobservationdata(sid, units, rstr)
-            self.reportobservation(sid, units, obsa, odir)
-            time.sleep(1)
+        for id in self.seriesdict:
+            aa = self.seriesdict[id]
+            assert aa[0][0] == 'id'
+            for i in range(1, len(aa) ):
+                id = aa[i][0]
+                units = aa[i][8]
+                url = '%s?series_id=%s&api_key=%s' % (self.sourl, id,
+                       self.api_key)
+                resp = self.uq.query(url)
+                rstr = resp.read().decode('utf-8')
+                obsa = self.xa.xmlstr2aa(rstr)
+                self.reportobservation(obsa, id, units, odir)
+                time.sleep(1)
 
-    def showseries(self):
+    def showseries(self, id):
         """ showseries()
 
         show the series list for a category in your browser
         """
-        self.dh.dictshow(self.seriesdict, 'Category %s series' % self.cid)
+        self.ah.aashow(self.seriesdict[id], '%s series' % id)
 
-    def reportseries(self, ofp):
+    def reportseries(self, id, ofp):
         """ reportseries(ofp)
 
         report series data for categories
         rstr - decoded response of a urllib request
         """
-        hdr = None
-        keys = []
-        for k in self.seriesdict.keys():
-            row = self.seriesdict[k]
-            if len(keys) == 0:
-                keys = [k for k in sorted(row.keys() )]
-                hdr = "','".join(keys)
-                print("'%s'" % (hdr), file=ofp )
-            fa = [row[k] for k in keys]
-            rw = "','".join(fa)
-            print("'%s'" % (rw), file=ofp )
-
-    def getseriesdata(self, rstr):
-        """ getseriesdata(rstr)
-
-        get series data for a category
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            adict = child.attrib
-            if 'DISCONTINUED' in adict['title']:
-                continue
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            id = adict['id']
-            self.seriesdict[id]={}
-            for k in ka:
-                self.seriesdict[id][k] = adict[k]
-            url='%s?series_id=%s&api_key=%s' % (self.sourl, adict['id'],
-                self.rapi_key)
-            self.seriesdict[id]['url'] = url
+        aa = self.seriesdict[id]
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
     def getseriesforsid(self, sid):
         """ getseriesforsid(sid)
@@ -247,7 +127,8 @@ class FREDcategories():
                                               self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        self.seriesdict[sid] = aa
 
     def getseriesforcid(self, cid):
         """ getseriesforcid(cid)
@@ -255,11 +136,20 @@ class FREDcategories():
         collect series data for a category_id
         cid - category_id
         """
+        if not cid:
+            print('getseriesforcid: cid required', file=stderr)
+            sys.exit(1)
         self.cid = cid
         url = '%s?category_id=%s&api_key=%s' % (self.csurl, cid, self.api_key)
         resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        aa[0].append('url')
+        for i in range(1, len(aa) ):
+            url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.ssurl,
+                     aa[i][0])
+            aa[i].append(url)
+        self.seriesdict[cid] = aa
 
     def getseries(self):
         """ getseries
@@ -270,7 +160,8 @@ class FREDcategories():
             url = '%s&api_key=%s' % (self.csurl, cid, self.api_key)
             resp=self.uq.query(url)
             rstr = resp.read().decode('utf-8')
-            self.getseriesdata(rstr)
+            aa = self.xa.xmlstr2aa(rstr)
+            self.seriesdict[cid] = aa
             time.sleep(1)
 
     def showcategories(self):
@@ -287,7 +178,6 @@ class FREDcategories():
         report links to data for categories
         ofp - file pointer to output file
         """
-        hdr = None
         keys = []
         for k in self.categorydict.keys():
             row = self.categorydict[k]
@@ -398,7 +288,7 @@ def main():
         sys.exit()
 
     ofn = None
-    fp = sys.stderr
+    fp = sys.stdout
 
     if not args.observations:
         if not args.directory and args.file:
@@ -429,14 +319,14 @@ def main():
     elif args.series and args.categoryid:
         fc.getseriesforcid(cid=args.categoryid)
         if args.showseries:
-            fc.showseries()
+            fc.showseries(args.categoryid)
             if fp != sys.stdout:
-                fc.reportseries(ofp=fp)
+                fc.reportseries(args.categoryid, ofp=fp)
         else:
-                fc.reportseries(ofp=fp)
+                fc.reportseries(args.categoryid, ofp=fp)
     elif args.series and args.seriesid:
         fc.getseriesforsid(sid=args.seriesid)
-        fc.reportseries(ofp=fp)
+        fc.reportseries(args.seriesid, ofp=fp)
     elif args.categories:
         fc.getcategories()
         if args.showcategories:

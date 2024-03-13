@@ -16,10 +16,12 @@ from xml.etree import ElementTree as ET
 
 try:
     from fredquery import query
-    from fredquery import dict2html
+    from fredquery import aa2html
+    from fredquery import xmlstr2aa
 except ImportError as e:
     import query
-    import dict2html
+    import aa2html
+    import xmlstr2aa
 
 class FREDtags():
     def __init__(self):
@@ -53,90 +55,8 @@ class FREDtags():
         self.observationsdict = {}
 
         self.uq = query._URLQuery()
-        self.dh = dict2html.Dict2HTML()
-
-    def reportobservations(self, odir):
-        """
-        reportobservations - report category timeseries
-        rstr - decoded response of a urllib request
-        """
-        if not odir:
-            print('no output directory provided', file=sys.stderr)
-            sys.exit(0)
-        for sid in self.observationsdict.keys():
-            sfn=os.path.join('%s/%s_%s.csv' % (odir,
-                    sid, self.seriesdict[sid]['units']) )
-            fn = ''.join(sfn.split() )
-            with open(fn, 'w') as fp:
-                ha=[]
-                for obs in self.observationsdict[sid]:
-                    ka=obs.keys()
-                    if len(ha) == 0:
-                        for f in ka:
-                            if f == 'value':
-                                sv = '%s_%s' % (sid,
-                                      self.seriesdict[sid]['units'])
-                                ha.append("'%s'" % ''.join(sv.split()) )
-                            else:
-                                ha.append("'%s'" % f)
-                        print(''.join(ha), file=fp )
-                    ra = []
-                    for rk in obs.keys():
-                        ra.append("'%s'," % (obs[rk]) )
-                    print(''.join(ra), file=fp )
-
-
-    def getseriesobservationdata(self, sid, rstr):
-        """
-        getseriesobservationdata - parse the observation xml
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            for k in ka:
-                obs[k] = adict[k]
-            self.observationsdict[sid].append(obs)
-
-    def getobservations(self):
-        """
-        getobservations - time series data for all series collected
-        """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            self.getseriesobservationdata(sid, rstr)
-            time.sleep(1)
-
-    def returnseriesobservationdata(self, sid, units, rstr):
-        """ returnseriesobservationdata(sid, units, rstr)
-
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        units - each observation is in this unit
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        obsa = []
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            obs['sid']   = sid
-            obs['units'] = units
-            for k in ka:
-                obs[k] = adict[k]
-            obsa.append(obs)
-        return obsa
+        self.ah = aa2html._AA2HTML()
+        self.xa = xmlstr2aa._XMLStr2AA()
 
     def reportobservation(self, sid, units, obsa, odir):
         """ reportobservation(sid, obsa, odir)
@@ -150,21 +70,10 @@ class FREDtags():
         # units can contain spaces
         fn = ''.join(sfn.split() )
         with open(fn, 'w') as fp:
-            ha=[]
+            keys=[]
             for obs in obsa:
-                ka = obs.keys()
-                if len(ha) == 0:
-                    for f in ka:
-                        if f == 'value':
-                            sv = '%s_%s' % (sid, units)
-                            ha.append("'%s'" % ''.join(sv.split()) )
-                        else:
-                            ha.append("'%s'" % f)
-                    print(''.join(ha), file=fp)
-                ra=[]
-                for rk in obs.keys():
-                    ra.append("'%s'," % (obs[rk]) )
-                print(''.join(ra), file=fp)
+                rw = "','".join(obs)
+                print("'%s'" % (rw), file=fp )
 
     def getandreportobservations(self, odir):
         """ getandreportobservations()
@@ -173,60 +82,47 @@ class FREDtags():
         series collected
         observation = time series data
         """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            units = self.seriesdict[sid]['units']
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            obsa = self.returnseriesobservationdata(sid, units, rstr)
-            self.reportobservation(sid, units, obsa, odir)
-            time.sleep(1)
+        for id in self.seriesdict.keys():
+            aa = self.seriesdict[id]
+            assert aa[0][0] == 'id'
+            assert aa[0][8] == 'units'
+            for i in range(1, len(aa) ):
+                a = aa[i]
+                id = a[0]
+                units = a[8]
+                url = '%s?series_id=%s&api_key=%s' % (self.sourl, id,
+                      self.api_key)
+                resp = self.uq.query(url)
+                rstr = resp.read().decode('utf-8')
+                # observation data doesn't identify itself
+                obsa = self.xa.xmlstr2aa(rstr)
+                self.reportobservation(id, units, obsa, odir)
+                time.sleep(1)
 
     def showseries(self):
         """ showseries()
 
         show series for a tagname in your browser
         """
-        self.dh.dictshow(self.seriesdict, 'FRED Tagname %s series' % self.tnm)
+        for k in self.seriesdict.keys():
+            self.ah.aashow(self.seriesdict[k],
+                'FRED Tagname %s series' % k)
 
     def reportseries(self, ofp):
         """ reportseries - report series for all collected
         """
-        if not ofp: ofp = sys.stderr
-        ha = []
-        ka = self.seriesdict.keys()
-        for sid in ka:
-            ra = []
-            if len(ha) == 0:
-                for k in self.seriesdict[sid].keys():
-                    ha.append("'%s'," % k)
-                print(''.join(ha), file=ofp)
-            ra=[]
-            for rk in self.seriesdict[sid].keys():
-                ra.append("'%s'," % self.seriesdict[sid][rk])
-            print(''.join(ra), file=ofp)
-
-    def getseriesdata(self, rstr):
-        """parse the xml to find relative link to tags
-           complete the url and return it
-        """
-        # print(rstr)
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            #print(child.tag, child.attrib)
-            adict = child.attrib
-            if 'DISCONTINUED' in child.attrib['title']:
-                continue
-            id = child.attrib['id']
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, id, self.rapi_key)
-            if len(id.split() ) > 1:
-                print('getseriesdata: %s' % (child.attrib), file=sys.stderr)
-            self.seriesdict[id]={}
-            for k in child.attrib.keys():
-                self.seriesdict[id][k] = child.attrib[k]
-            self.seriesdict[id]['url'] = url
+        hdr = []
+        for id in self.seriesdict.keys():
+            aa = self.serieѕdict[k]
+            for a in aa:
+                if len(hdr) == 0:
+                    hdr = a[0]
+                    hrow = "','".join(hdr)
+                    print("'%s'" % (row), file=ofp)
+                for i in range(1, len(a) ):
+                    ra = a[i]
+                    row = "','".join(ra)
+                    print("'%s'" % row, file=ofp)
 
     def getseriesforsid(self, sid):
         """ getseriesforsid get series for a series_id
@@ -239,7 +135,8 @@ class FREDtags():
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rspr)
+        self.seriesdict[sid] = aa
 
     def getseriesfortnm(self, tnm):
         """ getseriesfortnm get series for a tag_id
@@ -252,21 +149,18 @@ class FREDtags():
         url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, tnm, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        self.seriesdict[tnm] = aa
 
     def getseries(self):
         """ getseries get series for all tags collected
         """
-        for k in self.tagdict.keys():
-            # XXX eliminate illegal tag names and escape spaces in others
-            if ' ' in k:
-               print('getseries: %s' % (self.tagѕict[k]),
-                     file=sys.stderr)
-               continue
-            url = '%s?tag_names=%s&api_key=%s' % (self.tsurl, k, self.api_key)
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            self.getseriesdata(k, rstr)
+        aa = self.tagdict[0]
+        assert aa[0][0] == 'name'
+        for i in range(1, len(aa) ):
+            a == aa[i]
+            id = a[0]
+            self.getseriesfortnm(id)
             time.sleep(1)
 
     def showtags(self):
@@ -274,41 +168,32 @@ class FREDtags():
 
         show FRED tags in your browser
         """
-        self.dh.dictshow(self.tagdict, 'FRED Tags')
+        self.ah.aashow(self.tagdict[0], 'FRED Tags')
 
 
     def reporttags(self, ofp):
         """ reporttags - report for all tags collected
         """
-        if not ofp: ofp = sys.stderr
-        ha = []
         keys = []
-        for tnm in self.tagdict.keys():
-            row = self.tagdict[tnm]
-            if len(keys) == 0:
-                keys = [k for k in sorted(row.keys() )]
-                hdr = "','".join(keys)
-                print("'%s'" % (hdr), file=ofp )
-            fa = [row[k] for k in keys]
-            rw = "','".join(fa)
-            print("'%s'" % (rw), file=ofp )
-
-    def gettagdata(self, rstr):
-        """parse the xml for FRED tags
-        """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            adict = child.attrib
-            nm = child.attrib['name']
-            self.tagdict[nm]={}
-            for k in child.attrib.keys():
-                self.tagdict[nm][k] = child.attrib[k]
+        aa = self.tagdict[0]
+        keys = aa[0]
+        for i in range(1, len(aa) ):
+            a = aa[i]
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
     def gettags(self):
         url = '%s?api_key=%s' % (self.turl, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.gettagdata(rstr)
+               #  print(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        aa[0].append('url')
+        for i in range(1, len(aa) ):
+            id = aa[i][0]
+            url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.tsurl, id)
+            aa[i].append(url)
+        self.tagdict[0] = aa
 
 def main():
 
@@ -342,7 +227,7 @@ def main():
         sys.exit(1)
 
     ofn = None
-    fp = sys.stderr
+    fp = sys.stdout
 
     if not args.observations:
         if not args.directory and args.file:
@@ -366,14 +251,14 @@ def main():
             argp.print_help() 
             sys.exit()
         if args.tagname:
-            ft.getseriesfortnm(tnm=args.tagname)
+            ft.getseriesfortnm(args.tagname)
             ft.getandreportobservations(odir=args.directory)
         else:
             ft.gettags()
             ft.getseries()
             ft.getandreportobservations(odir=args.directory)
     elif args.series and args.tagname:
-        ft.getseriesfortnm(tnm=args.tagname)
+        ft.getseriesfortnm(args.tagname)
         if args.showseries:
             ft.showseries()
             if fp != sys.stdout:
@@ -381,7 +266,7 @@ def main():
         else:
             ft.reportseries(ofp=fp)
     elif args.series and args.seriesid:
-        ft.getseriesforsid(sid=args.seriesid)
+        ft.getseriesforsid(args.seriesid)
         ft.reportseries(ofp=fp)
     elif args.tags:
         ft.gettags()

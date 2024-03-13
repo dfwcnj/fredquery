@@ -11,14 +11,15 @@ import re
 import time
 import urllib.request
 import xml
-from xml.etree import ElementTree as ET
 
 try:
     from fredquery import query
-    from fredquery import dict2html
+    from fredquery import aa2html
+    from fredquery import xmlstr2aa
 except ImportError as e:
     import query
-    import dict2html
+    import aa2html
+    import xmlstr2aa
 
 class FREDsources():
 
@@ -60,78 +61,26 @@ class FREDsources():
         self.rid     = None
 
         self.uq = query._URLQuery()
-        self.dh = dict2html.Dict2HTML()
+        self.ah = aa2html._AA2HTML()
+        self.xa = xmlstr2aa._XMLStr2AA()
 
-    def returnseriesobservationdata(self, sid, units, rstr):
-        """ returnseriesobservationdata(sid, units, rstr)
 
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        units - each observation is in this unit
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        obsa = []
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            obs['sid']   = sid
-            obs['units'] = units
-            for k in ka:
-                obs[k] = adict[k]
-            obsa.append(obs)
-        return obsa
-
-    def getseriesobservationdata(self, sid, units, rstr):
-        """ getseriesobservationdata(sid, rstr)
-
-        parse the observation xml
-        sid - series id because the observation data doesn't have it
-        rstr - decoded response of a urllib request
-        """
-        xroot = ET.fromstring(rstr)
-        self.observationsdict[sid]=[]
-        for child in xroot:
-            adict = child.attrib
-            #print(child.tag, child.attrib, file=sys.stderr)
-            ka = adict.keys()
-            obs={}
-            obs['sid']   = sid
-            obs['units'] = units
-            for k in ka:
-                obs[k] = adict[k]
-            self.observationsdict[sid].append(obs)
-
-    def reportobservation(self, sid, units, obsa, odir):
+    def reportobservation(self, id, units, obsa, odir):
         """ reportobservation(sid, obsa, odir)
 
         report observations for a series_id
-        sid - series_id
+        id - series_id
         obsa - list of observations for a series_id
         odir - directory for storing observations
         """
-        sfn = os.path.join('%s/%s_%s.csv' % (odir, sid, units) )
-        # units can contain spaces
-        fn = ''.join(sfn.split() )
-        with open(fn, 'w') as fp:
-            ha=[]
-            for obs in obsa:
-                ka = obs.keys()
-                if len(ha) == 0:
-                    for f in ka:
-                        if f == 'value':
-                            sv = '%s_%s' % (sid, units)
-                            ha.append("'%s'" % ''.join(sv.split()) )
-                        else:
-                            ha.append("'%s'" % f)
-                    print(''.join(ha), file=fp)
-                ra=[]
-                for rk in obs.keys():
-                    ra.append("'%s'," % (obs[rk]) )
-                print(''.join(ra), file=fp)
+        # remove spaces and .
+        units = re.sub('[ .]', '', units)
+        fn = '%s_%s.csv' % (id, units)
+        fpath = os.path.join(odir, fn)
+        with open(fpath, 'w') as fp:
+            for row in obsa:
+                rw = "','".join(row)
+                print("'%s'" % (rw), file=fp )
 
     def getandreportobservations(self, odir):
         """ getandreportobservations()
@@ -140,32 +89,36 @@ class FREDsources():
         series collected
         observation = time series data
         """
-        for sid in self.seriesdict:
-            url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
-                   self.api_key)
-            units = self.seriesdict[sid]['units']
-            resp = self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            # observation data doesn't identify itself
-            obsa = self.returnseriesobservationdata(sid, units, rstr)
-            self.reportobservation(sid, units, obsa, odir)
-            time.sleep(1)
+        for rid in self.seriesdict:
+            aa = self.seriesdict[rid]
+            assert aa[0][0] == 'id'
+            assert aa[0][8] == 'units'
+            for i in range(1, len(aa) ):
+                a = aa[i]
+                sid = a[0]
+                url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+                       self.api_key)
+                units = a[8]
+                resp = self.uq.query(url)
+                rstr = resp.read().decode('utf-8')
+                # observation data doesn't identify itself
+                oaa = self.xa.xmlstr2aa(rstr)
+                self.reportobservation(sid, units, oaa, odir)
+                time.sleep(1)
 
-    def getseriesdata(self, rstr):
-        """ getseriesdata(rstr)
+    def reportseries(self, directory):
+        """ reportseries(directory)
 
-        collect the data for a series for a release
-        rstr - response string for the api query
+        report series for each release_id collected
+        directory - where to deposit the output
         """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            id = child.attrib['id']
-            ka = child.attrib.keys()
-            self.seriesdict[id] = {}
-            for k in ka:
-                self.seriesdict[id][k] = child.attrib[k]
-            self.seriesdict[id]['url'] =\
-              '%s?series_id=%s&api_key=%s' % (self.sourl, id, self.rapi_key)
+        for id in self.seriesdict.keys():
+            aa = self.seriesdict[id]
+            fn = os.path.join(directory, 'Release%sseries.csv' % (id) )
+            with open(fn, 'w') as fp:
+                for a in aa:
+                    row = "','".join(a)
+                    print("'%s'" % (row), file=fp)
 
     def getseriesforrid(self, rid):
         """ getseriesforrid(rid)
@@ -180,55 +133,50 @@ class FREDsources():
                                            rid, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        self.getseriesdata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        self.seriesdict[rid] = aa
 
     def getseries(self):
         """ getseries()
 
         convenience function to get series data for a source
         """
-        for rid in self.releasedict.keys():
-            self.getseriesforrid(rid)
-            time.sleep(1)
+        for sid in self.releasedict.keys():
+            aa = self.releasedict[sid]
+            for i in range(1, len(aa) ):
+                rid = aa[i][0]
+                self.getseriesforrid(rid)
+                time.sleep(1)
 
 
-    def reportreleases(self, ofp):
-        """ reportreleases(ofp)
+    def reportreleasesforsid(self, sid, ofp):
+        """ reportreleasesforsid(sid, ofp)
 
         report all releases collected
+        sid - source_id
         ofp - file pointer to which to write
         """
-        if not ofp: ofp=sys.stdout
-        ha = []
-        for id in self.releasedict.keys():
-            ka = self.releasedict[id].keys()
-            if len(ha) == 0:
-                for f in ka:
-                    ha.append("'%s'," % (f) )
-                print(''.join(ha), file=ofp)
-            ra=[]
-            for k in ka:
-                ra.append("'%s'," % (self.releasedict[id][k]) )
-            print(''.join(ra), file=ofp)
+        aa = self.releasedict[sid]
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
-    def getreleasedata(self, sid, rstr):
-        """ getreleasedata(sid, rstr)
+    def showreleasesforsid(self, sid):
+        aa = self.releasedict[sid]
+        name = 'Releases for source_id %s' % (sid)
+        self.ah.aashow(aa, name)
 
-        collect the data for a release
+    def getreleasesforsid(self, sid):
+        """ getreleasesforsid(sid)
+
+        get releases for a source_id
         sid - source_id
-        rstr - response string for the api query
         """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            id = child.attrib['id']
-            ka = child.attrib.keys()
-            self.releasedict[id] = {}
-            self.releasedict[id]['source_id'] = sid
-            self.releasedict[id]['sourcename'] = self.sourcedict[sid]['name']
-            for k in ka:
-                self.releasedict[id][k] = child.attrib[k]
-            self.releasedict[id]['url'] =\
-              '%s?release_id=%s&api_key=%s' % (self.rurl, id, self.rapi_key)
+        url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
+        resp=self.uq.query(url)
+        rstr = resp.read().decode('utf-8')
+        aa = self.xa.xmlstr2aa(rstr)
+        self.releasedict[sid] = aa
 
     def getreleases(self):
         """ getreleases()
@@ -236,10 +184,7 @@ class FREDsources():
         collect all releases for sources collected
         """
         for sid in self.sourcedict:
-            url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
-            resp=self.uq.query(url)
-            rstr = resp.read().decode('utf-8')
-            self.getreleasedata(sid, rstr)
+            self.getreleasesforsid(sid)
             time.sleep(1)
 
     def showsources(self):
@@ -247,7 +192,7 @@ class FREDsources():
 
         show the sources in your browser
         """
-        self.dh.dictshow(self.sourcedict, 'FRED Sources')
+        self.ah.aashow(self.sourcedict[1], 'FRED Sources')
 
     def reportsources(self, ofp):
         """reportsources(ofp)
@@ -255,38 +200,16 @@ class FREDsources():
         report data on all sources collected
         ofp - file pointer to which to write
         """
-        if not ofp: ofp=sys.stdout
         ha = []
         keys = []
         for id in self.sourcedict.keys():
-            row = self.sourcedict[id]
-            if len(keys) == 0:
-                keys = [k for k in sorted(row.keys() )]
-                hdr = "','".join(keys)
-                print("'%s'" % (hdr), file=ofp )
-            fa = [row[k] for k in keys]
-            rw = "','".join(fa)
-            print("'%s'" % (rw), file=ofp )
+            aa = self.sourcedict[id]
+            for a in aa:
+                row = "','".join(a)
+                print("'%s'" % (row), file=ofp)
 
-    def getsourcedata(self, rstr):
-        """ sourcedata(rstr)
-
-        collect source data for a FRED source
-        rstr - xml response string for the api query
-        """
-        xroot = ET.fromstring(rstr)
-        for child in xroot:
-            id = child.attrib['id']
-            ka = child.attrib.keys()
-            self.sourcedict[id] = {}
-            url = '%s?source_id=%s&api_key=%s' % (self.srurl, id, self.rapi_key)
-            for k in ka:
-                self.sourcedict[id][k] = child.attrib[k]
-            self.sourcedict[id]['url'] = url
-            if 'link' not in ka: self.sourcedict[id]['link'] = ''
-
-    def getsource(self, sid):
-        """ getsource(sid)
+    def getsourceforsid(self, sid):
+        """ getsourceforsid(sid)
 
         collect FRED source for a source_id
         """
@@ -294,7 +217,8 @@ class FREDsources():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         #  print(rstr)
-        self.getsourcedata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        self.sourcedict[sid] = aa
 
     def getsources(self):
         """ getsources()
@@ -305,7 +229,16 @@ class FREDsources():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         #  print(rstr)
-        self.getsourcedata(rstr)
+        aa = self.xa.xmlstr2aa(rstr)
+        keys = aa[0]
+        assert keys[0] == 'id'
+        aa[0].append('url')
+        for i in range(1, len(aa) ):
+            a = aa[i]
+            id = a[0]
+            url = '%s?source_id=%s&api_key=%s' % (self.srurl, id, self.rapi_key)
+            a.append(url)
+        self.sourcedict[1] = aa
 
 def main():
     argp = argparse.ArgumentParser(description='collect and report stlouisfed.org  FRED sources and/or their releases')
@@ -316,6 +249,10 @@ def main():
        help='show sources in your browser')
     argp.add_argument('--releases', action='store_true', default=False,
        help='return releases for a source_id')
+    argp.add_argument('--showreleasesforsid', action='store_true', default=False,
+       help='show releases for a source_id in your browser')
+    argp.add_argument('--series', action='store_true', default=False,
+       help='return series for a source_id')
     argp.add_argument('--observations', action='store_true', default=False,
        help='return observations for a source_id')
 
@@ -331,7 +268,8 @@ def main():
 
     args=argp.parse_args()
 
-    if not args.sources and not args.releases and not args.observations:
+    if not args.sources and not args.releases and\
+       not args.series and not args.observations:
         argp.print_help()
         sys.exit(1)
 
@@ -360,34 +298,38 @@ def main():
             argp.print_help()
             sys.exit()
         if args.sourceid:
-            fs.getsource(sid = args.sourceid)
-            fs.getreleases()
+            fs.getsourceforsid(args.sourceid)
+            fs.getreleasesforsid(args.sourceid)
             fs.getseries()
-            fs.getandreportobservations(odir=args.directory)
-        else:
-            fs.getsource()
-            fs.getreleases()
-            fr.getseries()
-            fs.getandreportobservations(odir=args.directory)
+            fs.getandreportobservations(args.directory)
+    elif args.series:
+        if not args.directory:
+            argp.print_help()
+            sys.exit()
+        if args.sourceid:
+            fs.getsourceforsid(args.sourceid)
+            fs.getreleasesforsid(args.sourceid)
+            fs.getseries()
+            fs.reportseries(args.directory)
+    elif args.sources and args.sourceid:
+        fs.getsourceforsid(args.sourceid)
+        fs.reportsources(fp)
     elif args.sources:
         fs.getsources()
         if args.showsources:
             fs.showsources()
             if fp != sys.stdout:
-                fs.reportsources(ofp=fp)
+                fs.reportsources(fp)
         else:
-            fs.reportsources(ofp=fp)
+            fs.reportsources(fp)
     elif args.releases and args.sourceid:
-        fs.getsource(sid = args.sourceid)
-        fs.getreleases()
-        fs.reportreleases(ofp=fp)
-    elif args.sources and args.sourceid:
-        fs.getsource(sid = args.sourceid)
-        fs.reportsources(odir=args.directory)
-    elif args.releases:
-        fs.getsources()
-        fs.getreleases()
-        fs.reportreleases(ofp=fp)
+        fs.getreleasesforsid(args.sourceid)
+        if args.showreleasesforsid:
+            fs.showreleasesforsid(args.sourceid)
+            if fp != sys.stdout:
+                fs.reportreleasesforsid(args.sourceid, fp)
+        else:
+            fs.reportreleasesforsid(args.sourceid, fp)
 
 if __name__ == '__main__':
     main()
