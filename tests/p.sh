@@ -32,6 +32,8 @@ set -x
 
 python fredseries.py --series     --seriesid AKIRPD \
         --file /tmp/AKIRPD_series.csv
+python fredseries.py --observations     --seriesid AKIRPD \
+        --file /tmp/AKIRPD_observations.csv
 python fredseries.py --categories --seriesid AKIRPD \
         --file /tmp/AKIRPD_categories.csv
 python fredseries.py --releases   --seriesid AKIRPD \

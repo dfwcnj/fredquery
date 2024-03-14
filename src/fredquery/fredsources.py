@@ -134,6 +134,9 @@ class FREDsources():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         aa = self.xa.xmlstr2aa(rstr)
+        if len(aa) == 0:
+            print('getseriesforrid(rid): no data' % (sid), file=sys.stderr)
+            return
         self.seriesdict[rid] = aa
 
     def getseries(self):

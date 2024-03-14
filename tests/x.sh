@@ -25,6 +25,8 @@ rm /private/tmp/[0-9A-Z]*.csv >/dev/null
 set -x
 
 fredseries --series     --seriesid AKIRPD --file /tmp/AKIRPD_series.csv
+fredseries --observations --seriesid AKIRPD --file\
+    /tmp/AKIRPD_observations.csv
 fredseries --categories --seriesid AKIRPD --file /tmp/AKIRPD_categories.csv
 fredseries --releases   --seriesid AKIRPD --file /tmp/AKIRPD_releases.csv
 fredseries --sources    --seriesid AKIRPD --file /tmp/AKIRPD_sources.csv

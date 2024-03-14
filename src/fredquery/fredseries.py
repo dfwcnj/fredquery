@@ -78,6 +78,15 @@ class FREDseries():
                 rw = "','".join(row)
                 print("'%s'" % (rw), file=fp )
 
+    def returnobservation(self, sid):
+        url = '%s?series_id=%s&api_key=%s' % (self.sourl, sid,
+           self.api_key)
+        resp = self.uq.query(url)
+        rstr = resp.read().decode('utf-8')
+        aa = self.xa.xmlstr2aa(rstr)
+        return aa
+
+
     def getandreportobservations(self, odir):
         """ getandreportobservations()
 
@@ -94,11 +103,7 @@ class FREDseries():
                 a = aa[i]
                 id = a[0]
                 units = a[8]
-                url = '%s?series_id=%s&api_key=%s' % (self.sourl, id,
-                   self.api_key)
-                resp = self.uq.query(url)
-                rstr = resp.read().decode('utf-8')
-                obsa = self.xa.xmlstr2aa(rstr)
+                obsa = self.returnobservation(id)
                 self.reportobservation(id, units, obsa, odir)
                 time.sleep(1)
 
@@ -114,10 +119,10 @@ class FREDseries():
             row = "','".join(a)
             print("'%s'" % (row), file=ofp)
 
-    def getseriesforsid(self, sid):
-        """ getseriesforsid(sid)
+    def returnseriesforsid(self, sid):
+        """ returnseriesforsid(sid)
 
-        get a series for a series_id
+        get a series for a series_id and return result
         sid - series_id
         """
         url = '%s?series_id=%s&api_key=%s' % (self.ssurl, sid,
@@ -125,6 +130,19 @@ class FREDseries():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         aa = self.xa.xmlstr2aa(rstr)
+        return aa
+
+
+    def getseriesforsid(self, sid):
+        """ getseriesforsid(sid)
+
+        get a series for a series_id
+        sid - series_id
+        """
+        aa = self.returnseriesforsid(sid)
+        if len(aa) == 0:
+            print('getseriesforsid(sid): no data' % (sid), file=sys.stderr)
+            return
         self.seriesdict[sid] = aa
 
     def reportdata(self, dict, ofp):

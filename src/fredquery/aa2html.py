@@ -8,6 +8,46 @@ class _AA2HTML():
     def __init__(self):
         self.htmla = []
 
+    def aa2table(self, aa):
+       """ aa2table(aa)
+
+       convert array of arrays to an html table
+       aa - array of arrays
+       """
+       tbla = []
+       # table
+       tbla.append('<table border="1">')
+       # table header
+       hdra = aa[0]
+       hdr = '</th><th>'.join(hdra)
+       tbla.append('<tr><th>%s</th></tr>' % (hdr) )
+       # table rows
+       for i in range(1, len(aa) ):
+           rowa = aa[i]
+           row = '</td><td>'.join(rowa)
+           tbla.append('<tr><td>%s</td></tr>' % (row) )
+
+       # close
+       tbla.append('</table>')
+       return ''.join(tbla)
+
+    def str2html(self, str, name):
+       """ str2html(str, name)
+
+       wrap html boilerplate around a string that must be proper html
+       str - string containing html data
+       name - name of the content
+       """
+       self.htmla.append('<html>')
+
+       if name:
+           self.htmla.append('<title>%s</title>' % (name) )
+           self.htmla.append('<h1 style="text-align:center">%s</h1>' % (name) )
+
+       self.htmla.append(str)
+       self.htmla.append('</html>')
+       return ''.join(self.htmla)
+
     def aa2html(self, aa, name):
        """ aa2html(aa, name)
 
@@ -21,20 +61,21 @@ class _AA2HTML():
            self.htmla.append('<title>%s</title>' % (name) )
            self.htmla.append('<h1 style="text-align:center">%s</h1>' % (name) )
 
-       # table
-       self.htmla.append('<table border="1">')
-       # table header
-       hdra = aa[0]
-       hdr = '</th><th>'.join(hdra)
-       self.htmla.append('<tr><th>%s</th></tr>' % (hdr) )
-       # table rows
-       for i in range(1, len(aa) ):
-           rowa = aa[i]
-           row = '</td><td>'.join(rowa)
-           self.htmla.append('<tr><td>%s</td></tr>' % (row) )
+       self.htmla.append(self.aa2table(aa) )
+       ## table
+       #self.htmla.append('<table border="1">')
+       ## table header
+       #hdra = aa[0]
+       #hdr = '</th><th>'.join(hdra)
+       #self.htmla.append('<tr><th>%s</th></tr>' % (hdr) )
+       ## table rows
+       #for i in range(1, len(aa) ):
+       #    rowa = aa[i]
+       #    row = '</td><td>'.join(rowa)
+       #    self.htmla.append('<tr><td>%s</td></tr>' % (row) )
 
        # close
-       self.htmla.append('</table></html>')
+       self.htmla.append('</html>')
        return ''.join(self.htmla)
 
 

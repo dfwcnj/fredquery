@@ -128,6 +128,8 @@ class FREDcategories():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         aa = self.xa.xmlstr2aa(rstr)
+        if len(aa) == 0:
+            print('getseriesforsid(sid): no data' % (sid), file=sys.stderr)
         self.seriesdict[sid] = aa
 
     def getseriesforcid(self, cid):
@@ -144,6 +146,9 @@ class FREDcategories():
         resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         aa = self.xa.xmlstr2aa(rstr)
+        if len(aa) == 0:
+            print('getseriesforcid(%s): no data' % (cid), file=sys.stderr)
+            return
         aa[0].append('url')
         for i in range(1, len(aa) ):
             url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.ssurl,
