@@ -112,17 +112,11 @@ class FREDtags():
         """ reportseries - report series for all collected
         """
         hdr = []
-        for id in self.seriesdict.keys():
-            aa = self.serieѕdict[k]
+        for k in self.seriesdict.keys():
+            aa =  self.seriesdict[k]
             for a in aa:
-                if len(hdr) == 0:
-                    hdr = a[0]
-                    hrow = "','".join(hdr)
-                    print("'%s'" % (row), file=ofp)
-                for i in range(1, len(a) ):
-                    ra = a[i]
-                    row = "','".join(ra)
-                    print("'%s'" % row, file=ofp)
+                row = "','".join(a)
+                print("'%s'" % (row), file=ofp)
 
     def getseriesforsid(self, sid):
         """ getseriesforsid get series for a series_id
@@ -135,7 +129,7 @@ class FREDtags():
         url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
-        aa = self.xa.xmlstr2aa(rspr)
+        aa = self.xa.xmlstr2aa(rstr)
         self.seriesdict[sid] = aa
 
     def getseriesfortnm(self, tnm):
@@ -168,7 +162,8 @@ class FREDtags():
 
         show FRED tags in your browser
         """
-        self.ah.aashow(self.tagdict[0], 'FRED Tags')
+        for k in self.tagdict.keys():
+            self.ah.aashow(self.tagdict[k], 'FRED Tags')
 
 
     def reporttags(self, ofp):

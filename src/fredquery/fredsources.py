@@ -192,7 +192,8 @@ class FREDsources():
 
         show the sources in your browser
         """
-        self.ah.aashow(self.sourcedict[1], 'FRED Sources')
+        for k in self.sourcedict.keys():
+            self.ah.aashow(self.sourcedict[k], 'FRED Sources')
 
     def reportsources(self, ofp):
         """reportsources(ofp)

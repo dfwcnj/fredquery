@@ -156,7 +156,12 @@ class FREDcategories():
 
         collect series data for all categories collected
         """
-        for cid in self.categorydict.keys():
+        for k in self.categorydict.keys():
+            aa = self.categorydict[k]
+            assert aa[0][0] == 'cid'
+            for i in range(1, len(aa) ):
+                a = aa[i]
+                cid = a[0]
             url = '%s&api_key=%s' % (self.csurl, cid, self.api_key)
             resp=self.uq.query(url)
             rstr = resp.read().decode('utf-8')
@@ -169,7 +174,8 @@ class FREDcategories():
 
         display the categories in your browser
         """
-        self.dh.dictshow(self.categorydict, 'FRED Categories')
+        for k in self.categorydict.keys():
+            self.ah.aashow(self.categorydict[k], 'FRED Categories')
 
 
     def reportcategories(self, ofp):
@@ -180,14 +186,10 @@ class FREDcategories():
         """
         keys = []
         for k in self.categorydict.keys():
-            row = self.categorydict[k]
-            if len(keys) == 0:
-                keys = [k for k in sorted(row.keys() )]
-                hdr = "','".join(keys)
-                print("'%s'" % (hdr), file=ofp )
-            fa = [row[k] for k in keys]
-            rw = "','".join(fa)
-            print("'%s'" % (rw), file=ofp )
+            aa = self.categorydict[k]
+            for row in aa:
+                rw = "','".join(row)
+                print("'%s'" % (rw), file=ofp )
 
     def getcategorydata(self, rstr):
         """ getcategorydata(rstr)
@@ -230,7 +232,15 @@ class FREDcategories():
 
         parser = MyHTMLParser()
         parser.feed(rstr)
-        self.categorydict = parser.cdict
+        aa = []
+        aa.append(['cid','name','url'])
+        for k in parser.cdict.keys():
+            c = []
+            c.append(parser.cdict[k]['cid'])
+            c.append(parser.cdict[k]['name'])
+            c.append(parser.cdict[k]['url'])
+            aa.append(c)
+        self.categorydict[0] = aa
 
     def getcategory(self, cid):
         """ getcategory(cid)

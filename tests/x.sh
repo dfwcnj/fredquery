@@ -24,17 +24,6 @@ ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null
 set -x
 
-
-fredsources --sources  --file /tmp/sources.csv
-fredsources --releases --sourceid 69 --file /tmp/sreleases69.csv
-#    fredsources --releases --file /tmp/sreleases.csv
-#    fredsources --sources --directory /tmp
-fredsources --observations --sourceid 69 --directory /tmp
-set +x
-ls /private/tmp/[0-9A-Z]*.csv | wc -l
-rm /private/tmp/[0-9A-Z]*.csv >/dev/null
-set -x
-
 fredseries --series     --seriesid AKIRPD --file /tmp/AKIRPD_series.csv
 fredseries --categories --seriesid AKIRPD --file /tmp/AKIRPD_categories.csv
 fredseries --releases   --seriesid AKIRPD --file /tmp/AKIRPD_releases.csv
@@ -45,6 +34,18 @@ set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null
 set -x
+
+fredsources --sources  --file /tmp/sources.csv
+fredsources --releases --sourceid 69 --file /tmp/sreleases69.csv
+#    fredsources --releases --file /tmp/sreleases.csv
+#    fredsources --sources --directory /tmp
+fredsources --series --sourceid 69 --directory /tmp
+fredsources --observations --sourceid 69 --directory /tmp
+set +x
+ls /private/tmp/[0-9A-Z]*.csv | wc -l
+rm /private/tmp/[0-9A-Z]*.csv >/dev/null
+set -x
+
 
 fredtags --tags   --file /tmp/tags.csv
 fredtags --series --tagname price --file /tmp/tseriesprice.csv
