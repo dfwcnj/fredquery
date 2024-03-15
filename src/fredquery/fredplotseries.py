@@ -148,11 +148,11 @@ class PlotSeries():
            htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
 
            htmla.append('<table border="1">')
-           hrowa = [sea[0][i] for i in range(len(sea[0]-1) if i != 3]
+           hrowa = [sea[0][i] for i in range(len(sea[0])-1) if i != 3]
            hrow = '</th><th>'.join(hrowa)
            htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
 
-           drowa = [sea[1][i] for i in range(len(sea[1]-1) if i != 3]
+           drowa = [sea[1][i] for i in range(len(sea[1])-1) if i != 3]
            drow = '</td><td>'.join(drowa)
            htmla.append('<tr>%s</tr>' % (''.join(drow)) )
            htmla.append('</table>')

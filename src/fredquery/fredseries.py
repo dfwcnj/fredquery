@@ -106,6 +106,16 @@ class FREDseries():
                 self.reportobservation(id, units, obsa, odir)
                 time.sleep(1)
 
+    def showseries(self, id):
+        """ showseries(id)
+
+        show the series in your browser
+        id - series_id
+        """
+        aa = self.seriesdict[id]
+        self.ah.aashow(aa, 'Series %s' % (id) )
+
+
     def reportseries(self, id, ofp):
         """ reportseries(ofp)
 
@@ -246,6 +256,8 @@ def main():
 
     argp.add_argument('--series', action='store_true', default=False,
                        help="report series urls for series_id")
+    argp.add_argument('--showseries', action='store_true', default=False,
+                       help="show the series in your browser")
     argp.add_argument('--observations', action='store_true', default=False,
                        help="report timeseries data for series")
 
@@ -299,7 +311,12 @@ def main():
             fc.getandreportobservations(odir=args.directory)
     elif args.series:
         fc.getseriesforsid(args.seriesid)
-        fc.reportseries(args.seriesid, fp)
+        if args.showseries:
+            fc.showseries(args.seriesid)
+            if fp != sys.stdout:
+                fc.reportseries(args.seriesid, fp)
+        else:
+            fc.reportseries(args.seriesid, fp)
     elif args.categories:
         fc.getcategoriesforsid(args.seriesid)
         fc.reportcategories(fp)

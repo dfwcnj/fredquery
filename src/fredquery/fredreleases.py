@@ -294,7 +294,7 @@ def main():
             fr.showseriesforid(args.releaseid)
             if fp != sys.stdout:
                 fr.reportseriesdorid(args.releaseid, ofp=fp)
-            else:
+        else:
                 fr.reportseriesdorid(args.releaseid, ofp=fp)
     elif args.series and args.seriesid:
         fr.getseriesforsid(sid=args.seriesid)
