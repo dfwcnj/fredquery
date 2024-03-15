@@ -75,7 +75,10 @@ class PlotSeries():
         self.fig.update_layout(
             title='FRED Time Series',
             yaxis_title=units,
-            xaxis_title='dates'
+            xaxis_title='dates',
+        )
+        self.fig.update_layout(
+           legend=dict( orientation='h')
         )
 
         self.fig.show()

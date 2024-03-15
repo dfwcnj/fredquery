@@ -36,10 +36,11 @@ path = "src/fredquery/__about__.py"
 
 [project.scripts]
 fredcategories = "fredquery.fredcategories:main"
-fredreleases = "fredquery.fredreleases:main"
-fredsources = "fredquery.fredsources:main"
-fredseries = "fredquery.fredseries:main"
-fredtags = "fredquery.fredtags:main"
+fredreleases   = "fredquery.fredreleases:main"
+fredsources    = "fredquery.fredsources:main"
+fredseries     = "fredquery.fredseries:main"
+fredplotseries = "fredquery.fredplotseries:main"
+fredtags       = "fredquery.fredtags:main"
 
 
 [tool.hatch.build.targets.wheel]
