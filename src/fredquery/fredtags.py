@@ -211,7 +211,7 @@ def main():
                        help="report timeseries data for tags")
 
     argp.add_argument('--tagname', required=False,
-       help='tag_id identifies a FRED tag')
+       help='comma separated list of tag_names')
     argp.add_argument('--seriesid', required=False,
        help='series_id - identifies a series')
 

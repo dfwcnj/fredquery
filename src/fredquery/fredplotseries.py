@@ -17,6 +17,8 @@ except ImportError as e:
 
 class PlotSeries():
     def __init__(self):
+        """ create a plot with a list of FRED series_id's
+        """
         # settings
         pd.options.plotting.backend = "plotly"
 
@@ -30,14 +32,28 @@ class PlotSeries():
         self.fig = None
 
     def getobservation(self, sid):
+        """ getobservation(sid)
+
+        get time series observations data for a FRED serieѕ_id
+        sid - FRED series_id
+        """
         aa = self.fs.returnobservation(sid)
         self.observationsdict[sid] = aa
 
     def getseries(self, sid):
+        """ getseries(sid)
+
+        get descriptive data for a FRED series_id
+        sid - FRED series_id
+        """
         aa = self.fs.returnseriesforsid(sid)
         self.seriesdict[sid] = aa
 
     def composedata(self):
+        """ composedata()
+
+        prepare the series data for the plots
+        """
         for k in self.seriesdict.keys():
             saa = self.seriesdict[k]
             assert saa[0][0] == 'id'
@@ -59,6 +75,11 @@ class PlotSeries():
             self.data[sid] = vals
 
     def composeplot(self):
+        """ composeplot()
+
+        compose plotly figure for later display with the series_id as
+        the legend
+        """
         self.fig = go.Figure()
 
         units = None
@@ -79,9 +100,13 @@ class PlotSeries():
             yaxis_title=units,
             xaxis_title='dates',
         )
-        #self.fig.update_layout( legend=dict( orientation='h'))
+        return self.fig
 
     def composeplottitlelegend(self):
+        """ composeplottitlelegend()
+
+        compose plotly figure with the series title as the legend
+        """
         self.fig = go.Figure()
 
         units = None
@@ -105,8 +130,9 @@ class PlotSeries():
         self.fig.update_layout(
            legend=dict( orientation='h')
         )
+        return self.fig
 
-    def composeplotnotes(self):
+    def composeplotwnotes(self):
         htmla = []
         htmla.append('<html>')
         htmla.append('<title>FRED Series Plot</title>')
@@ -114,28 +140,38 @@ class PlotSeries():
         fightml = self.fig.to_html()
 
         htmla.append(fightml)
+
         for k in self.seriesdict.keys():
            sea = self.seriesdict[k]
            sid=sea[1][0]
            stitle=sea[1][3]
-           htmla.append('<h5>%s: %s<〈/h5>' % (sid, stitle) )
-           htmla.append('<p>')
-           for i in range(len(sea[0])-1):
-               htmla.append('%s %s,' % (sea[0][i], sea[1][i]) )
-           htmla.append('</p>')
-           htmla.append('<p>')
-           htmla.append(sea[1][-1])
-           htmla.append('</p>')
-        htmla.append('</html>')
-        self.html = ''.join(htmla)
-        return ''.join(htmla)
+           htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
 
-    def showplotwnotes(self):
-        html = self.composeplotnotes()
-        fn = '/tmp/plot.html'
+           htmla.append('<table border="1">')
+           hrowa = [sea[0][i] for i in range(len(sea[0]-1) if i != 3]
+           hrow = '</th><th>'.join(hrowa)
+           htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
+
+           drowa = [sea[1][i] for i in range(len(sea[1]-1) if i != 3]
+           drow = '</td><td>'.join(drowa)
+           htmla.append('<tr>%s</tr>' % (''.join(drow)) )
+           htmla.append('</table>')
+
+           htmla.append('<p>')
+           htmla.append('%s: %s' % (sea[0][-1], sea[1][-1]) )
+           htmla.append('</p>')
+
+        htmla.append('</html>')
+
+        self.html = ''.join(htmla)
+        return self.html
+
+    def saveplotwnotes(self, fn):
         with open(fn, 'w') as fp:
-            fp.write(html)
-            webbrowser.open('file://%s' % (fn) )
+            fp.write(self.html)
+
+    def showplotwnotes(self, fn):
+        webbrowser.open('file://%s' % (fn) )
 
     def showplot(self):
         self.fig.show()
@@ -144,6 +180,8 @@ def main():
     argp = argparse.ArgumentParser(description='plot a series list')
     argp.add_argument('--serieslist', required=True,
         help="comma separated list of FRED series_id's")
+    argp.add_argument('--htmlfile', default='/tmp/p.html',
+        help="path to file that will contain the plot")
     args = argp.parse_args()
 
     PS = PlotSeries()
@@ -155,7 +193,9 @@ def main():
     PS.composedata()
     PS.composeplot()
 
-    PS.showplotwnotes()
+    PS.composeplotwnotes()
+    PS.saveplotwnotes(args.htmlfile)
+    PS.showplotwnotes(args.htmlfile)
     #PS.showplot()
 
 if __name__ == '__main__':

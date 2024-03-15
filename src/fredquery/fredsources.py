@@ -106,19 +106,34 @@ class FREDsources():
                 self.reportobservation(sid, units, oaa, odir)
                 time.sleep(1)
 
-    def reportseries(self, directory):
-        """ reportseries(directory)
+    def showseries(self):
+        """ showseries()
 
-        report series for each release_id collected
-        directory - where to deposit the output
+        show the series list for a source in your browser
         """
+        saa = []
         for id in self.seriesdict.keys():
             aa = self.seriesdict[id]
-            fn = os.path.join(directory, 'Release%sseries.csv' % (id) )
-            with open(fn, 'w') as fp:
-                for a in aa:
-                    row = "','".join(a)
-                    print("'%s'" % (row), file=fp)
+            if len(saa) == 0:
+                saa.append(aa[0])
+            saa.append(aa[1])
+        self.ah.aashow(saa, 'Source ID %s Series' % (self.sid))
+
+    def reportseries(self, fp):
+        """ reportseries(fp)
+
+        report series for each release_id collected
+        fp - file pointer to destination file
+        """
+        saa = []
+        for id in self.seriesdict.keys():
+            aa = self.seriesdict[id]
+            if len(saa) == 0:
+                saa.append(aa[0])
+            saa.append(aa[1])
+        for a in saa:
+            row = "','".join(a)
+            fp.write("'%s'" % (row) )
 
     def getseriesforrid(self, rid):
         """ getseriesforrid(rid)
@@ -175,6 +190,7 @@ class FREDsources():
         get releases for a source_id
         sid - source_id
         """
+        self.sid = sid
         url = '%s?source_id=%s&api_key=%s' % (self.srurl, sid, self.api_key)
         resp=self.uq.query(url)
         rstr = resp.read().decode('utf-8')
@@ -257,6 +273,8 @@ def main():
        help='show releases for a source_id in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series for a source_id')
+    argp.add_argument('--showseries', action='store_true', default=False,
+       help='show series for a series_id in your browser')
     argp.add_argument('--observations', action='store_true', default=False,
        help='return observations for a source_id')
 
@@ -306,15 +324,15 @@ def main():
             fs.getreleasesforsid(args.sourceid)
             fs.getseries()
             fs.getandreportobservations(args.directory)
-    elif args.series:
-        if not args.directory:
-            argp.print_help()
-            sys.exit()
-        if args.sourceid:
-            fs.getsourceforsid(args.sourceid)
-            fs.getreleasesforsid(args.sourceid)
-            fs.getseries()
-            fs.reportseries(args.directory)
+    elif args.series and args.sourceid:
+        fs.getreleasesforsid(args.sourceid)
+        fs.getseries()
+        if args.showseries:
+            fs.showseries()
+            if fp != sys.stdout:
+                fs.reportseries(fp)
+        else:
+            fs.reportseries(fp)
     elif args.sources and args.sourceid:
         fs.getsourceforsid(args.sourceid)
         fs.reportsources(fp)
