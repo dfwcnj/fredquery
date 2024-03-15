@@ -3,6 +3,7 @@
 import os
 import sys
 import argparse
+import webbrowser
 
 import plotly.express as px
 import plotly.graph_objects as go
@@ -23,6 +24,7 @@ class PlotSeries():
         self.seriesdict={}
         self.observationsdict={}
         self.data = {}
+        self.html = None
 
         self.df = None
         self.fig = None
@@ -69,6 +71,29 @@ class PlotSeries():
             self.fig.add_trace(go.Scatter(
                 x=self.data['dates'],
                 y=self.data[k],
+                name=sid
+            ) )
+
+        self.fig.update_layout(
+            title='FRED Time Series',
+            yaxis_title=units,
+            xaxis_title='dates',
+        )
+        #self.fig.update_layout( legend=dict( orientation='h'))
+
+    def composeplottitlelegend(self):
+        self.fig = go.Figure()
+
+        units = None
+
+        for k in self.seriesdict.keys():
+            saa = self.seriesdict[k]
+            sid    = saa[1][0]
+            stitle = saa[1][3]
+            units  = saa[1][8]
+            self.fig.add_trace(go.Scatter(
+                x=self.data['dates'],
+                y=self.data[k],
                 name=stitle
             ) )
 
@@ -81,28 +106,39 @@ class PlotSeries():
            legend=dict( orientation='h')
         )
 
-        self.fig.show()
+    def composeplotnotes(self):
+        htmla = []
+        htmla.append('<html>')
+        htmla.append('<title>FRED Series Plot</title>')
 
+        fightml = self.fig.to_html()
 
-
-
-    def oldcomposeplot(self):
-        self.df = pd.DataFrame(self.data)
-        fig = None
-
+        htmla.append(fightml)
         for k in self.seriesdict.keys():
-            assert saa[0][0] == 'id'
-            assert saa[0][3] == 'title'
-            assert saa[0][8] == 'units'
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-            if not fig:
-                fig = px.line(self.df, x=self.df['dates'], y=self.df[k])
-            else:
-                fig.add_scatter(x=self.df['dates'], y=self.df[k])
+           sea = self.seriesdict[k]
+           sid=sea[1][0]
+           stitle=sea[1][3]
+           htmla.append('<h5>%s: %s<〈/h5>' % (sid, stitle) )
+           htmla.append('<p>')
+           for i in range(len(sea[0])-1):
+               htmla.append('%s %s,' % (sea[0][i], sea[1][i]) )
+           htmla.append('</p>')
+           htmla.append('<p>')
+           htmla.append(sea[1][-1])
+           htmla.append('</p>')
+        htmla.append('</html>')
+        self.html = ''.join(htmla)
+        return ''.join(htmla)
 
-        fig.show()
+    def showplotwnotes(self):
+        html = self.composeplotnotes()
+        fn = '/tmp/plot.html'
+        with open(fn, 'w') as fp:
+            fp.write(html)
+            webbrowser.open('file://%s' % (fn) )
+
+    def showplot(self):
+        self.fig.show()
 
 def main():
     argp = argparse.ArgumentParser(description='plot a series list')
@@ -118,6 +154,9 @@ def main():
         PS.getobservation(sid)
     PS.composedata()
     PS.composeplot()
+
+    PS.showplotwnotes()
+    #PS.showplot()
 
 if __name__ == '__main__':
     main()

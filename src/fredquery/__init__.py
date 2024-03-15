@@ -6,6 +6,7 @@
 #import fredquery.fredcategories
 #import fredquery.fredreleases
 #import fredquery.fredseries
+#import fredquery.fredplotseries
 #import fredquery.fredtags
 #import fredquery.fredsources
 
