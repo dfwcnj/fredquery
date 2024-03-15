@@ -1,4 +1,3 @@
-
 #! env python
 
 # return information on series, their categories, releases, sources, etc

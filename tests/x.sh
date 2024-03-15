@@ -5,6 +5,7 @@ fredcategories --categories --file /tmp/categories.csv
 fredcategories --series --categoryid 32455 --file /tmp/cseries32455.csv 
 fredcategories --series --seriesid 00XALCATM086NEST --file \
        /tmp/00XALCATM086NEST_series.csv 
+fredcategories --series --seriesid 00XALCATM086NEST --showseries
 fredcategories --observations --directory /tmp --categoryid 32455
 #    fredcategories --observations --directory /tmp --seriesid
 set +x
@@ -17,6 +18,7 @@ fredreleases --releases --file /tmp/releases.csv
 fredreleases --series --releaseid 365 --file /tmp/rseries365.csv
 fredreleases --series --seriesid ALLQ13A12MINR --file \
      /tmp/ALLQ13A12MINR_series.csv
+fredreleases --series --seriesid ALLQ13A12MINR --showseries
 fredreleases --observations --directory /tmp --releaseid 9
 #    fredreleases --observations --directory /tmp --seriesid 
 set +x
@@ -41,7 +43,8 @@ fredsources --sources  --file /tmp/sources.csv
 fredsources --releases --sourceid 69 --file /tmp/sreleases69.csv
 #    fredsources --releases --file /tmp/sreleases.csv
 #    fredsources --sources --directory /tmp
-fredsources --series --sourceid 69 --directory /tmp
+fredsources --series --sourceid 69 --file /tmp/Source69Series.csv
+fredsources --observations --sourceid 69 --showseries
 fredsources --observations --sourceid 69 --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l

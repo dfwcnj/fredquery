@@ -101,7 +101,7 @@ class FREDcategories():
 
         show the series list for a category in your browser
         """
-        self.ah.aashow(self.seriesdict[id], '%s series' % id)
+        self.ah.aashow(self.seriesdict[id], 'Category %s series' % id)
 
     def reportseries(self, id, ofp):
         """ reportseries(ofp)

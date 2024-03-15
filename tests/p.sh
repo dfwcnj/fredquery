@@ -8,6 +8,7 @@ python fredcategories.py --categories --file /tmp/categories.csv
 python fredcategories.py --categories --showcategories
 python fredcategories.py --series --categoryid 32455 \
         --file /tmp/cseries32455.csv 
+python fredcategories.py --series --categoryid 32455 --showseries
 python fredcategories.py --series --seriesid 00XALCATM086NEST --file \
        /tmp/00XALCATM086NEST_series.csv 
 python fredcategories.py --observations --directory /tmp --categoryid 32455
@@ -21,6 +22,7 @@ set -x
 python fredreleases.py --releases --file /tmp/releases.csv
 python fredreleases.py --releases --showreleases
 python fredreleases.py --series --releaseid 365 --file /tmp/rseries365.csv
+python fredreleases.py --series --releaseid 365 --showseries
 python fredreleases.py --series --seriesid ALLQ13A12MINR --file \
      /tmp/ALLQ13A12MINR_series.csv
 python fredreleases.py --observations --directory /tmp --releaseid 9
@@ -54,7 +56,8 @@ python fredsources.py --sources  --showsources
 python fredsources.py --releases --sourceid 69 --file /tmp/sreleases69.csv
 #    python fredsources.py --releases --file /tmp/sreleases.csv
 #    python fredsources.py --sources --directory /tmp
-python fredsources.py --series --sourceid 69 --directory /tmp
+python fredsources.py --series --sourceid 69 --file /tmp/Source69Series.csv
+python fredsources.py --series --sourceid 69 --showseries
 python fredsources.py --observations --sourceid 69 --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
@@ -65,6 +68,7 @@ set -x
 python fredtags.py --tags   --file /tmp/tags.csv
 python fredtags.py --tags   --showtags
 python fredtags.py --series --tagname price --file /tmp/tseriesprice.csv
+python fredtags.py --series --tagname price --showseries
 python fredtags.py --series --seriesid ALLQ14ICNR \
         --file /tmp/ALLQ14ICNR_series.csv
 python fredtags.py --observations --tagname price --directory /tmp

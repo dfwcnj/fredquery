@@ -110,7 +110,7 @@ class FREDreleases():
         display series list for a release_id in your browser
         id release_id or series_id
         """
-        self.ah.aashow(self.seriesdict[id], '%s series' % id)
+        self.ah.aashow(self.seriesdict[id], 'Release %s series' % id)
 
     def reportseriesdorid(self, id, ofp):
         """ reportseriesdorid(id, ofp)
@@ -234,7 +234,7 @@ def main():
        help='show releases in your browser')
     argp.add_argument('--series', action='store_true', default=False,
        help='return series by series_id or by release_id')
-    argp.add_argument('--showseriesforid', action='store_true', default=False,
+    argp.add_argument('--showseries', action='store_true', default=False,
        help='show series for a  release_id in your browser')
     argp.add_argument('--observations', action='store_true', default=False,
        help='return timeseries for all series collected')
@@ -290,7 +290,7 @@ def main():
             fr.getandreportobservations(odir=args.directory)
     elif args.series and args.releaseid:
         fr.getseriesforrid(rid=args.releaseid)
-        if args.showseriesforid:
+        if args.showseries:
             fr.showseriesforid(args.releaseid)
             if fp != sys.stdout:
                 fr.reportseriesdorid(args.releaseid, ofp=fp)
