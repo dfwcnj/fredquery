@@ -101,6 +101,9 @@ class FREDcategories():
 
         show the series list for a category in your browser
         """
+        if id not in self.seriesdict:
+            print('no data for category_id %s' % (id), file=sys.stderr )
+            return
         self.ah.aashow(self.seriesdict[id], 'Category %s series' % id)
 
     def reportseries(self, id, ofp):
@@ -131,6 +134,11 @@ class FREDcategories():
         if len(aa) == 0:
             print('getseriesforsid(sid): no data' % (sid), file=sys.stderr)
         self.seriesdict[sid] = aa
+
+    def returnseriesforcid(self, cid):
+        if cid in self.seriesdict:
+            return self.seriesdict[cid]
+        return None
 
     def getseriesforcid(self, cid):
         """ getseriesforcid(cid)
@@ -174,14 +182,21 @@ class FREDcategories():
             self.seriesdict[cid] = aa
             time.sleep(1)
 
+
+    def returncategories(self):
+        cata = []
+        for k in self.categorydict.keys():
+            aa = self.categorydict[k]
+            cata.extend(aa)
+        return cata
+
     def showcategories(self):
         """ showcategories()
 
         display the categories in your browser
         """
-        for k in self.categorydict.keys():
-            self.ah.aashow(self.categorydict[k], 'FRED Categories')
-
+        aa = self.returncategories()
+        self.ah.aashow(aa, 'FRED Categories')
 
     def reportcategories(self, ofp):
         """ reportcategories(ofp)
@@ -189,12 +204,10 @@ class FREDcategories():
         report links to data for categories
         ofp - file pointer to output file
         """
-        keys = []
-        for k in self.categorydict.keys():
-            aa = self.categorydict[k]
-            for row in aa:
-                rw = "','".join(row)
-                print("'%s'" % (rw), file=ofp )
+        aa = self.returncategories()
+        for row in aa:
+            rw = "','".join(row)
+            print("'%s'" % (rw), file=ofp )
 
     def getcategorydata(self, rstr):
         """ getcategorydata(rstr)
