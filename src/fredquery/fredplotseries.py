@@ -25,7 +25,8 @@ class PlotSeries():
         self.fs = fredseries.FREDseries()
         self.seriesdict={}
         self.observationsdict={}
-        self.data = {}
+        self.data = {}       # when all have the same units
+        self.multidata = {}  # when there are different units
         self.html = None
 
         self.df = None
@@ -49,13 +50,109 @@ class PlotSeries():
         aa = self.fs.returnseriesforsid(sid)
         self.seriesdict[sid] = aa
 
+    def composemultidata(self):
+        """ composemultidata()
+
+        prepare the series data for the plots by units
+        """
+        for k in self.seriesdict.keys():
+            saa = self.seriesdict[k] # two rows: keys, data
+            assert saa[0][0] == 'id'
+            assert saa[0][3] == 'title'
+            assert saa[0][8] == 'units'
+            sid    = saa[1][0]
+            stitle = saa[1][3]
+            units  = saa[1][8]
+
+            oaa = self.observationsdict[k]
+
+            print('%s %d' % (k, len(oaa)), file=sys.stderr)
+
+            dates = [oaa[i][2] for i in range(len(oaa) )]
+            vals  = [oaa[i][3] for i in range(len(oaa) )]
+
+            if units not in self.multidata.keys():
+                self.multidata[units] = {}
+            if 'dates' not in self.multidata[units].keys():
+                self.multidata[units]['dates'] = dates
+            self.multidata[units][sid] = vals
+
+
+    def composemultiplot(self, units):
+        """ composemultiplot()
+
+        compose plotly figure for later display with the series_id as
+        the legend
+        units - units of the observations
+        """
+        fig = go.Figure()
+
+        dates = self.multidata[units]['dates']
+
+        for k in self.multidata[units].keys():
+            if k == 'dates': continue
+            saa = self.seriesdict[k]
+            sid    = saa[1][0]
+            stitle = saa[1][3]
+            units  = saa[1][8]
+            fig.add_trace(go.Scatter(
+                x=self.data['dates'],
+                y=self.data[k],
+                name=sid
+            ) )
+
+        fig.update_layout(
+            title='FRED Time Series',
+            yaxis_title=units,
+            xaxis_title='dates',
+        )
+        return fig
+
+    def composemultiplotwnotes(self):
+        """ composemultiplotwnotes()
+
+        compost plots with notes organized by units
+        """
+        htmla = []
+        htmla.append('<html>')
+        htmla.append('<title>FRED Series Plot</title>')
+
+        for u in self.multidata.keys():
+            fig = self.composemultiplot(u)
+            fightml = fig.to_html()
+            for k in self.multidata[u].keys():
+                if k == 'dates': continue
+                sea = self.seriesdict[k]
+                sid=sea[1][0]
+                stitle=sea[1][3]
+                htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
+
+                htmla.append('<table border="1">')
+                hrowa = [sea[0][i] for i in range(len(sea[0])-1) if i != 3]
+                hrow = '</th><th>'.join(hrowa)
+                htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
+
+                drowa = [sea[1][i] for i in range(len(sea[1])-1) if i != 3]
+                drow = '</td><td>'.join(drowa)
+                htmla.append('<tr>%s</tr>' % (''.join(drow)) )
+                htmla.append('</table>')
+
+                htmla.append('<p>')
+                htmla.append('%s: %s' % (sea[0][-1], sea[1][-1]) )
+                htmla.append('</p>')
+
+        htmla.append('</html>')
+
+        self.html = ''.join(htmla)
+        return self.html
+
     def composedata(self):
         """ composedata()
 
         prepare the series data for the plots
         """
         for k in self.seriesdict.keys():
-            saa = self.seriesdict[k]
+            saa = self.seriesdict[k] # two rows: keys, data
             assert saa[0][0] == 'id'
             assert saa[0][3] == 'title'
             assert saa[0][8] == 'units'
@@ -73,6 +170,7 @@ class PlotSeries():
             if 'dates' not in self.data.keys():
                 self.data['dates'] = dates
             self.data[sid] = vals
+
 
     def composeplot(self):
         """ composeplot()

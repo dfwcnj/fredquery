@@ -163,22 +163,25 @@ class FREDtags():
             self.getseriesfortnm(id)
             time.sleep(1)
 
+    def returntags(self):
+        taa = []
+        for k in self.tagdict.keys():
+            taa.extend(self.tagdict[k])
+        return taa
+
     def showtags(self):
         """ showtags()
 
         show FRED tags in your browser
         """
-        for k in self.tagdict.keys():
-            self.ah.aashow(self.tagdict[k], 'FRED Tags')
-
+        aa = self.returntags()
+        self.ah.aashow(aa, 'FRED Tags')
 
     def reporttags(self, ofp):
         """ reporttags - report for all tags collected
         """
-        keys = []
-        aa = self.tagdict[0]
-        keys = aa[0]
-        for i in range(1, len(aa) ):
+        aa = self.returntags()
+        for i in range(len(aa) ):
             a = aa[i]
             row = "','".join(a)
             print("'%s'" % (row), file=ofp)

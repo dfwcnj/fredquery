@@ -206,13 +206,19 @@ class FREDsources():
             self.getreleasesforsid(sid)
             time.sleep(1)
 
+    def returnsources(self):
+        saa = []
+        for k in self.sourcedict.keys():
+            saa.extend(self.sourcedict[k])
+        return saa
+
     def showsources(self):
         """ showsources()
 
         show the sources in your browser
         """
-        for k in self.sourcedict.keys():
-            self.ah.aashow(self.sourcedict[k], 'FRED Sources')
+        aa = self.returnsources()
+        self.ah.aashow(aa, 'FRED Sources')
 
     def reportsources(self, ofp):
         """reportsources(ofp)
@@ -220,13 +226,10 @@ class FREDsources():
         report data on all sources collected
         ofp - file pointer to which to write
         """
-        ha = []
-        keys = []
-        for id in self.sourcedict.keys():
-            aa = self.sourcedict[id]
-            for a in aa:
-                row = "','".join(a)
-                print("'%s'" % (row), file=ofp)
+        aa = self.returnsources()
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
     def getsourceforsid(self, sid):
         """ getsourceforsid(sid)

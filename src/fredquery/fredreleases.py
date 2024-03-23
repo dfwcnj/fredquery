@@ -110,6 +110,9 @@ class FREDreleases():
         display series list for a release_id in your browser
         id release_id or series_id
         """
+        if id not in self.seriesdict:
+            print('no data for %s' % (id), file=sys.stderr)
+            return
         self.ah.aashow(self.seriesdict[id], 'Release %s series' % id)
 
     def reportseriesdorid(self, id, ofp):
@@ -181,13 +184,20 @@ class FREDreleases():
                 self.getseriesforrid(rid)
                 time.sleep(1)
 
+    def returnreleases(self):
+        # silly but helps me avoid having to remember the one key
+        raa = []
+        for k in self.releasesdict.keys():
+            raa.extend(self.releasesdict[k])
+        return raa
+
     def showreleases(self):
         """ showreleases()
 
         show stlouisfed.org FRED releases as a table in your browser
         """
-        for k in self.releasesdict.keys():
-            self.ah.aashow(self.releasesdict[k], 'FRED Releases')
+        aa = self.returnreleases()
+        self.ah.aashow(aa, 'FRED Releases')
 
     def reportreleases(self, ofp):
         """reportreleases(ofp)
@@ -197,16 +207,11 @@ class FREDreleases():
         """
         if not ofp: ofp=sys.stdout
         keys = []
-        for id in self.releasesdict.keys():
-            # header
-            aa = self.releasesdict[id]
-            hdra = aa[0]
-            hdr = "','".join(hdra)
-            print("'%s'" % (hdr), file=ofp)
-            for i in range(1, len(aa) ):
-                rowa = aa[i]
-                row  = "','".join(rowa)
-                print("'%s'" % (row), file=ofp )
+        aa = self.returnreleases()
+        for i in range(len(aa) ):
+            rowa = aa[i]
+            row  = "','".join(rowa)
+            print("'%s'" % (row), file=ofp )
 
     def getreleases(self):
         """ getreleases()

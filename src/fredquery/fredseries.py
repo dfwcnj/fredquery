@@ -112,6 +112,9 @@ class FREDseries():
         show the series in your browser
         id - series_id
         """
+        if id not in self.seriesdict:
+            print('no data for id %s' % (id), file=sys.stderr)
+            return
         aa = self.seriesdict[id]
         self.ah.aashow(aa, 'Series %s' % (id) )
 
