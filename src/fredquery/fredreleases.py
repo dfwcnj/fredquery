@@ -104,13 +104,19 @@ class FREDreleases():
                 self.reportobservation(id, units, obsa, odir)
                 time.sleep(1)
 
+    def returnseriesforid(self, id):
+        if id in self.seriesdict:
+            return self.seriesdict[id]
+        return None
+
     def showseriesforid(self, id):
         """ showseriesforid(d)
 
         display series list for a release_id in your browser
         id release_id or series_id
         """
-        if id not in self.seriesdict:
+        aa = self.returnseriesforid(id)
+        if aa == None:
             print('no data for %s' % (id), file=sys.stderr)
             return
         self.ah.aashow(self.seriesdict[id], 'Release %s series' % id)
@@ -122,7 +128,9 @@ class FREDreleases():
         id = release_id or series_id
         ofp - file pointer to which to write
         """
-        aa = self.seriesdict[id]
+        aa = self.returnseriesforid(id)
+        if aa == None:
+            return
         for a in aa:
             row = "','".join(a)
             print("'%s'" % (row), file=ofp)

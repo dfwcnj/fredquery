@@ -106,17 +106,21 @@ class FREDsources():
                 self.reportobservation(sid, units, oaa, odir)
                 time.sleep(1)
 
-    def showseries(self):
-        """ showseries()
-
-        show the series list for a source in your browser
-        """
+    def returnseries(self):
         saa = []
         for id in self.seriesdict.keys():
             aa = self.seriesdict[id]
             if len(saa) == 0:
                 saa.append(aa[0])
             saa.append(aa[1])
+        return saa
+
+    def showseries(self):
+        """ showseries()
+
+        show the series list for a source in your browser
+        """
+        saa = self.returnseries()
         self.ah.aashow(saa, 'Source ID %s Series' % (self.sid))
 
     def reportseries(self, fp):
@@ -125,12 +129,7 @@ class FREDsources():
         report series for each release_id collected
         fp - file pointer to destination file
         """
-        saa = []
-        for id in self.seriesdict.keys():
-            aa = self.seriesdict[id]
-            if len(saa) == 0:
-                saa.append(aa[0])
-            saa.append(aa[1])
+        saa = self.returnseries()
         for a in saa:
             row = "','".join(a)
             fp.write("'%s'" % (row) )

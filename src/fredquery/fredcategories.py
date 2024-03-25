@@ -136,7 +136,7 @@ class FREDcategories():
         self.seriesdict[sid] = aa
 
     def returnseriesforcid(self, cid):
-        if cid in self.seriesdict:
+        if cid in self.seriesdict.keys():
             return self.seriesdict[cid]
         return None
 

@@ -99,6 +99,16 @@ class FREDtags():
                 self.reportobservation(id, units, obsa, odir)
                 time.sleep(1)
 
+    def returnseries(self):
+        saa=[]
+        for k in self.seriesdict.keys():
+            aa =  self.seriesdict[k]
+            if len(saa) == 0:
+                saa.append(aa[0])
+            saa.append(aa[1])
+        return saa
+
+
     def showseries(self):
         """ showseries()
 

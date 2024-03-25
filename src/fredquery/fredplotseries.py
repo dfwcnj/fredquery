@@ -25,8 +25,8 @@ class PlotSeries():
         self.fs = fredseries.FREDseries()
         self.seriesdict={}
         self.observationsdict={}
-        self.data = {}       # when all have the same units
-        self.multidata = {}  # when there are different units
+        self.seriesdata = {}       # when all have the same units
+        self.unitseriesdata = {}  # when there are different units
         self.html = None
 
         self.df = None
@@ -50,8 +50,8 @@ class PlotSeries():
         aa = self.fs.returnseriesforsid(sid)
         self.seriesdict[sid] = aa
 
-    def composemultidata(self):
-        """ composemultidata()
+    def composeunitseriesdata(self):
+        """ composeunitseriesdata()
 
         prepare the series data for the plots by units
         """
@@ -71,15 +71,15 @@ class PlotSeries():
             dates = [oaa[i][2] for i in range(len(oaa) )]
             vals  = [oaa[i][3] for i in range(len(oaa) )]
 
-            if units not in self.multidata.keys():
-                self.multidata[units] = {}
-            if 'dates' not in self.multidata[units].keys():
-                self.multidata[units]['dates'] = dates
-            self.multidata[units][sid] = vals
+            if units not in self.unitseriesdata.keys():
+                self.unitseriesdata[units] = {}
+            if 'dates' not in self.unitseriesdata[units].keys():
+                self.unitseriesdata[units]['dates'] = dates
+            self.unitseriesdata[units][sid] = vals
 
 
-    def composemultiplot(self, units):
-        """ composemultiplot()
+    def composeunitseriesplot(self, units):
+        """ composeunitseriesplot()
 
         compose plotly figure for later display with the series_id as
         the legend
@@ -87,17 +87,17 @@ class PlotSeries():
         """
         fig = go.Figure()
 
-        dates = self.multidata[units]['dates']
+        dates = self.unitseriesdata[units]['dates']
 
-        for k in self.multidata[units].keys():
+        for k in self.unitseriesdata[units].keys():
             if k == 'dates': continue
             saa = self.seriesdict[k]
             sid    = saa[1][0]
             stitle = saa[1][3]
             units  = saa[1][8]
             fig.add_trace(go.Scatter(
-                x=self.data['dates'],
-                y=self.data[k],
+                x=self.seriesdata['dates'],
+                y=self.seriesdata[k],
                 name=sid
             ) )
 
@@ -108,8 +108,8 @@ class PlotSeries():
         )
         return fig
 
-    def composemultiplotwnotes(self):
-        """ composemultiplotwnotes()
+    def composeunitseriesplotwnotes(self):
+        """ composeunitseriesplotwnotes()
 
         compost plots with notes organized by units
         """
@@ -117,10 +117,10 @@ class PlotSeries():
         htmla.append('<html>')
         htmla.append('<title>FRED Series Plot</title>')
 
-        for u in self.multidata.keys():
-            fig = self.composemultiplot(u)
+        for u in self.unitseriesdata.keys():
+            fig = self.composeunitseriesplot(u)
             fightml = fig.to_html()
-            for k in self.multidata[u].keys():
+            for k in self.unitseriesdata[u].keys():
                 if k == 'dates': continue
                 sea = self.seriesdict[k]
                 sid=sea[1][0]
@@ -146,8 +146,8 @@ class PlotSeries():
         self.html = ''.join(htmla)
         return self.html
 
-    def composedata(self):
-        """ composedata()
+    def composeseriesdata(self):
+        """ composeseriesdata()
 
         prepare the series data for the plots
         """
@@ -167,13 +167,13 @@ class PlotSeries():
             dates = [oaa[i][2] for i in range(len(oaa) )]
             vals  = [oaa[i][3] for i in range(len(oaa) )]
 
-            if 'dates' not in self.data.keys():
-                self.data['dates'] = dates
-            self.data[sid] = vals
+            if 'dates' not in self.seriesdata.keys():
+                self.seriesdata['dates'] = dates
+            self.seriesdata[sid] = vals
 
 
-    def composeplot(self):
-        """ composeplot()
+    def composeseriesplot(self):
+        """ composeseriesplot()
 
         compose plotly figure for later display with the series_id as
         the legend
@@ -188,8 +188,8 @@ class PlotSeries():
             stitle = saa[1][3]
             units  = saa[1][8]
             self.fig.add_trace(go.Scatter(
-                x=self.data['dates'],
-                y=self.data[k],
+                x=self.seriesdata['dates'],
+                y=self.seriesdata[k],
                 name=sid
             ) )
 
@@ -200,8 +200,8 @@ class PlotSeries():
         )
         return self.fig
 
-    def composeplottitlelegend(self):
-        """ composeplottitlelegend()
+    def composeseriesplottitlelegend(self):
+        """ composeseriesplottitlelegend()
 
         compose plotly figure with the series title as the legend
         """
@@ -215,8 +215,8 @@ class PlotSeries():
             stitle = saa[1][3]
             units  = saa[1][8]
             self.fig.add_trace(go.Scatter(
-                x=self.data['dates'],
-                y=self.data[k],
+                x=self.seriesdata['dates'],
+                y=self.seriesdata[k],
                 name=stitle
             ) )
 
@@ -230,7 +230,7 @@ class PlotSeries():
         )
         return self.fig
 
-    def composeplotwnotes(self):
+    def composeseriesplotwnotes(self):
         htmla = []
         htmla.append('<html>')
         htmla.append('<title>FRED Series Plot</title>')
@@ -288,10 +288,10 @@ def main():
     for sid in sida:
         PS.getseries(sid)
         PS.getobservation(sid)
-    PS.composedata()
-    PS.composeplot()
+    PS.composeseriesdata()
+    PS.composeseriesplot()
 
-    PS.composeplotwnotes()
+    PS.composeseriesplotwnotes()
     PS.saveplotwnotes(args.htmlfile)
     PS.showplotwnotes(args.htmlfile)
     #PS.showplot()
