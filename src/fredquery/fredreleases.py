@@ -22,10 +22,10 @@ except ImportError as e:
     import aa2html
     import xmlstr2aa
 
-class FREDreleases():
+class FREDReleases():
 
     def __init__(self):
-        """ FREDreleases
+        """ FREDReleases
 
         collects categories, their releases, series for the release
         and observations(timeseries data) for the series
@@ -288,7 +288,7 @@ def main():
                 print('%s: %s' % (ofn, e) )
                 sys.exit()
 
-    fr = FREDreleases()
+    fr = FREDReleases()
 
     if args.observations:
         if not args.directory:

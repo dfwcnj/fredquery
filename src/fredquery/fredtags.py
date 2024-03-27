@@ -23,9 +23,9 @@ except ImportError as e:
     import aa2html
     import xmlstr2aa
 
-class FREDtags():
+class FREDTags():
     def __init__(self):
-        """ FREDtags
+        """ FREDTags
 
         collects FRED tags, their releases, their series, and their
         observations(timeseries data)
@@ -258,7 +258,7 @@ def main():
                 print('%s: %s' % (ofn, e) )
                 sys.exit()
 
-    ft = FREDtags()
+    ft = FREDTags()
 
     if args.observations:
         if not args.directory:

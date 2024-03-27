@@ -24,8 +24,8 @@ except ImportError as e:
     import aa2html
     import xmlstr2aa
 
-class FREDcategories():
-    """ FREDcategories
+class FREDCategories():
+    """ FREDCategories
 
     collect and report stlouisfed.org FRED categories, their series, and
     their observations(timeseries data)
@@ -332,7 +332,7 @@ def main():
             except Exception as e:
                 print('%s: %s' % (ofn, e) )
 
-    fc = FREDcategories()
+    fc = FREDCategories()
     if args.observations:
         if not args.directory:
             argp.print_help()

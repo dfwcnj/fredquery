@@ -15,18 +15,17 @@ try:
 except ImportError as e:
     import fredseries
 
-class PlotSeries():
+class FREDPlotSeries():
     def __init__(self):
         """ create a plot with a list of FRED series_id's
         """
         # settings
         pd.options.plotting.backend = "plotly"
 
-        self.fs = fredseries.FREDseries()
+        self.fs = fredseries.FREDSeries()
         self.seriesdict={}
         self.observationsdict={}
-        self.seriesdata = {}       # when all have the same units
-        self.unitseriesdata = {}  # when there are different units
+        self.unitseriesdict = {}  # [units][sid]
         self.html = None
 
         self.df = None
@@ -41,6 +40,11 @@ class PlotSeries():
         aa = self.fs.returnobservation(sid)
         self.observationsdict[sid] = aa
 
+    def getobservationlist(self, slist):
+        sa = slist.split(',')
+        for sid in sa:
+            self.getobservation(sid)
+
     def getseries(self, sid):
         """ getseries(sid)
 
@@ -48,37 +52,18 @@ class PlotSeries():
         sid - FRED series_id
         """
         aa = self.fs.returnseriesforsid(sid)
-        self.seriesdict[sid] = aa
+        units = aa[1][8]
+        if units not in self.unitseriesdict.keys():
+            self.unitseriesdict[units]={}
+        self.unitseriesdict[units][sid] = aa
 
-    def composeunitseriesdata(self):
-        """ composeunitseriesdata()
+    def getserieslist(self, slist):
+        sa = slist.split(',')
+        for sid in sa:
+            self.getseries(sid)
 
-        prepare the series data for the plots by units
-        """
-        for k in self.seriesdict.keys():
-            saa = self.seriesdict[k] # two rows: keys, data
-            assert saa[0][0] == 'id'
-            assert saa[0][3] == 'title'
-            assert saa[0][8] == 'units'
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-
-            oaa = self.observationsdict[k]
-
-            print('%s %d' % (k, len(oaa)), file=sys.stderr)
-
-            dates = [oaa[i][2] for i in range(len(oaa) )]
-            vals  = [oaa[i][3] for i in range(len(oaa) )]
-
-            if units not in self.unitseriesdata.keys():
-                self.unitseriesdata[units] = {}
-            if 'dates' not in self.unitseriesdata[units].keys():
-                self.unitseriesdata[units]['dates'] = dates
-            self.unitseriesdata[units][sid] = vals
-
-
-    def composeunitseriesplot(self, units):
+    # https://plotly.com/python/multiple-axes/
+    def composeunitseriesplot(self, u):
         """ composeunitseriesplot()
 
         compose plotly figure for later display with the series_id as
@@ -87,19 +72,18 @@ class PlotSeries():
         """
         fig = go.Figure()
 
-        dates = self.unitseriesdata[units]['dates']
-
-        for k in self.unitseriesdata[units].keys():
-            if k == 'dates': continue
-            saa = self.seriesdict[k]
+        for sid in self.unitseriesdict[u]:
+            saa = self.unitseriesdict[u][sid]
             sid    = saa[1][0]
             stitle = saa[1][3]
             units  = saa[1][8]
-            fig.add_trace(go.Scatter(
-                x=self.seriesdata['dates'],
-                y=self.seriesdata[k],
-                name=sid
-            ) )
+
+            oaa = self.observationsdict[sid]
+
+            dates = [oaa[i][2] for i in range(len(oaa) )]
+            vals  = [oaa[i][3] for i in range(len(oaa) )]
+
+            fig.add_trace(go.Scatter( x=vals, y=dates, name=sid) )
 
         fig.update_layout(
             title='FRED Time Series',
@@ -117,28 +101,34 @@ class PlotSeries():
         htmla.append('<html>')
         htmla.append('<title>FRED Series Plot</title>')
 
-        for u in self.unitseriesdata.keys():
+        for u in self.unitseriesdict.keys():
+
             fig = self.composeunitseriesplot(u)
             fightml = fig.to_html()
-            for k in self.unitseriesdata[u].keys():
-                if k == 'dates': continue
-                sea = self.seriesdict[k]
-                sid=sea[1][0]
-                stitle=sea[1][3]
+            htmla.append(fightml)
+
+            for sid in self.unitseriesdict[u].keys():
+                saa = self.unitseriesdict[u][sid]
+                sid=saa[1][0]
+                stitle=saa[1][3]
+
                 htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
 
+                # header
                 htmla.append('<table border="1">')
-                hrowa = [sea[0][i] for i in range(len(sea[0])-1) if i != 3]
+                hrowa = [saa[0][i] for i in range(len(saa[0])-1) if i != 3]
                 hrow = '</th><th>'.join(hrowa)
                 htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
 
-                drowa = [sea[1][i] for i in range(len(sea[1])-1) if i != 3]
+                # data
+                drowa = [saa[1][i] for i in range(len(saa[1])-1) if i != 3]
                 drow = '</td><td>'.join(drowa)
                 htmla.append('<tr>%s</tr>' % (''.join(drow)) )
                 htmla.append('</table>')
 
+                # notes
                 htmla.append('<p>')
-                htmla.append('%s: %s' % (sea[0][-1], sea[1][-1]) )
+                htmla.append('%s: %s' % (saa[0][-1], saa[1][-1]) )
                 htmla.append('</p>')
 
         htmla.append('</html>')
@@ -146,132 +136,14 @@ class PlotSeries():
         self.html = ''.join(htmla)
         return self.html
 
-    def composeseriesdata(self):
-        """ composeseriesdata()
-
-        prepare the series data for the plots
-        """
-        for k in self.seriesdict.keys():
-            saa = self.seriesdict[k] # two rows: keys, data
-            assert saa[0][0] == 'id'
-            assert saa[0][3] == 'title'
-            assert saa[0][8] == 'units'
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-
-            oaa = self.observationsdict[k]
-
-            print('%s %d' % (k, len(oaa)), file=sys.stderr)
-
-            dates = [oaa[i][2] for i in range(len(oaa) )]
-            vals  = [oaa[i][3] for i in range(len(oaa) )]
-
-            if 'dates' not in self.seriesdata.keys():
-                self.seriesdata['dates'] = dates
-            self.seriesdata[sid] = vals
-
-
-    def composeseriesplot(self):
-        """ composeseriesplot()
-
-        compose plotly figure for later display with the series_id as
-        the legend
-        """
-        self.fig = go.Figure()
-
-        units = None
-
-        for k in self.seriesdict.keys():
-            saa = self.seriesdict[k]
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-            self.fig.add_trace(go.Scatter(
-                x=self.seriesdata['dates'],
-                y=self.seriesdata[k],
-                name=sid
-            ) )
-
-        self.fig.update_layout(
-            title='FRED Time Series',
-            yaxis_title=units,
-            xaxis_title='dates',
-        )
-        return self.fig
-
-    def composeseriesplottitlelegend(self):
-        """ composeseriesplottitlelegend()
-
-        compose plotly figure with the series title as the legend
-        """
-        self.fig = go.Figure()
-
-        units = None
-
-        for k in self.seriesdict.keys():
-            saa = self.seriesdict[k]
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-            self.fig.add_trace(go.Scatter(
-                x=self.seriesdata['dates'],
-                y=self.seriesdata[k],
-                name=stitle
-            ) )
-
-        self.fig.update_layout(
-            title='FRED Time Series',
-            yaxis_title=units,
-            xaxis_title='dates',
-        )
-        self.fig.update_layout(
-           legend=dict( orientation='h')
-        )
-        return self.fig
-
-    def composeseriesplotwnotes(self):
-        htmla = []
-        htmla.append('<html>')
-        htmla.append('<title>FRED Series Plot</title>')
-
-        fightml = self.fig.to_html()
-
-        htmla.append(fightml)
-
-        for k in self.seriesdict.keys():
-           sea = self.seriesdict[k]
-           sid=sea[1][0]
-           stitle=sea[1][3]
-           htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
-
-           htmla.append('<table border="1">')
-           hrowa = [sea[0][i] for i in range(len(sea[0])-1) if i != 3]
-           hrow = '</th><th>'.join(hrowa)
-           htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
-
-           drowa = [sea[1][i] for i in range(len(sea[1])-1) if i != 3]
-           drow = '</td><td>'.join(drowa)
-           htmla.append('<tr>%s</tr>' % (''.join(drow)) )
-           htmla.append('</table>')
-
-           htmla.append('<p>')
-           htmla.append('%s: %s' % (sea[0][-1], sea[1][-1]) )
-           htmla.append('</p>')
-
-        htmla.append('</html>')
-
-        self.html = ''.join(htmla)
-        return self.html
-
-    def saveplotwnotes(self, fn):
+    def saveplothtml(self, fn):
         with open(fn, 'w') as fp:
             fp.write(self.html)
 
-    def showplotwnotes(self, fn):
+    def showplothtml(self, fn):
         webbrowser.open('file://%s' % (fn) )
 
-    def showplot(self):
+    def showplotfig(self):
         self.fig.show()
 
 def main():
@@ -284,17 +156,14 @@ def main():
 
     PS = PlotSeries()
 
-    sida = args.serieslist.split(',')
-    for sid in sida:
-        PS.getseries(sid)
-        PS.getobservation(sid)
-    PS.composeseriesdata()
-    PS.composeseriesplot()
+    PS.getserieslist(args.serieslist)
+    PS.getobservationlist(args.serieslist)
 
-    PS.composeseriesplotwnotes()
-    PS.saveplotwnotes(args.htmlfile)
-    PS.showplotwnotes(args.htmlfile)
-    #PS.showplot()
+    PS.composeunitseriesplotwnotes()
+
+    PS.saveplothtml(args.htmlfile)
+    PS.showplothtml(args.htmlfile)
+    #PS.showplotfig()
 
 if __name__ == '__main__':
     main()

@@ -21,10 +21,10 @@ except ImportError as e:
     import aa2html
     import xmlstr2aa
 
-class FREDsources():
+class FREDSources():
 
     def __init__(self):
-        """ FREDsources
+        """ FREDSources
 
         collects sources and their releases
         data
@@ -315,7 +315,7 @@ def main():
                 print('%s: %s' % (ofn, e) )
                 sys.exit()
 
-    fs = FREDsources()
+    fs = FREDSources()
 
     if args.observations:
         if not args.directory:
