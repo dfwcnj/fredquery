@@ -29,6 +29,13 @@ class FREDPlot():
 
 
     def plotseries(self, aa, directory):
+        """ plotseries(aa, directory)
+
+        generate an html page with plots and notes abơut the plots
+        and show them on your browser
+        aa - array of arrays containing series information
+        directory - where to store the html page
+        """
         ida = [aa[i][0] for i in range(1, len(aa))]
         idc = ','.join(ida)
         fp = fredplotseries.FREDPlotSeries()
@@ -40,24 +47,52 @@ class FREDPlot():
         fp.showplothtml(hfn)
 
     def plotcategoryid(self, catid, directory):
+        """ plotcategoryid(catid, directory)
+
+        plot series for category_id catid, storing the html page
+        in directory
+        catid - category_id
+        directory - where to store the html page
+        """
         fc = fredcategories.FREDCategories()
         fc.getseriesforcid(catid)
         aa = fc.returnseriesforcid(catid)
         self.plotseries(aa, directory)
 
     def plotreleaseid(self, rid, directory):
+        """ plotreleaseid(rid, directory)
+
+        plot series for release_id rid, storing the html page
+        in directory
+        rid - release_id
+        directory - where to store the html page
+        """
         fr = fredreleases.FREDReleases()
         fr.getseriesforrid(rid)
         aa = fr.returnseriesforrid(catid)
         self.plotseries(aa, directory)
 
     def plotsourceid(self, sid, directory):
+        """ plotsourceid(sid, directory)
+
+        plot series for source_id sid, storing the html page
+        in directory
+        sid - source_id
+        directory - where to store the html page
+        """
         fs = fredsources.FREDSources()
         fs.getseriesforcid(sid)
         aa = fs.returnseriesforsid(sid)
         self.plotseries(aa, directory)
 
     def plottagname(self, tnm, directory):
+        """ plottagname(tnm, directory)
+
+        plot series for tag name tnm, storing the html page
+        in directory
+        tnm - tagname
+        directory - where to store the html page
+        """
         ft = fredtags.FREDTags()
         ft.getseriesfortnm(tnm)
         aa = self.fc.returnseriesfortnm(tnm)

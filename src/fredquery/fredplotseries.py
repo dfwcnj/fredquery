@@ -58,6 +58,11 @@ class FREDPlotSeries():
         self.unitseriesdict[units][sid] = aa
 
     def getserieslist(self, slist):
+        """ getserieslist(slist)
+
+        split comma separated slist into an array of series_id
+        and get series data for each series
+        """
         sa = slist.split(',')
         for sid in sa:
             self.getseries(sid)
@@ -137,10 +142,20 @@ class FREDPlotSeries():
         return self.html
 
     def saveplothtml(self, fn):
+        """ saveplothtml(fn)
+
+        save the plot html
+        fn - filename
+        """
         with open(fn, 'w') as fp:
             fp.write(self.html)
 
     def showplothtml(self, fn):
+        """ showplothtml(fn)
+
+        show the html in your web browser
+        fn - filename of the html file
+        """
         webbrowser.open('file://%s' % (fn) )
 
     def showplotfig(self):
