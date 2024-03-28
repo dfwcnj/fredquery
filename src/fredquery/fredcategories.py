@@ -115,7 +115,7 @@ class FREDCategories():
             print("'%s'" % (row), file=ofp)
 
     def returnseriesforcid(self, cid):
-        if cid in self.seriesdicṫ.keys():
+        if cid in self.seriesdict.keys():
             return self.seriesdict[cid]
         return None
 

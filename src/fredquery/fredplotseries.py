@@ -88,7 +88,7 @@ class FREDPlotSeries():
             dates = [oaa[i][2] for i in range(len(oaa) )]
             vals  = [oaa[i][3] for i in range(len(oaa) )]
 
-            fig.add_trace(go.Scatter( x=vals, y=dates, name=sid) )
+            fig.add_trace(go.Scatter( x=dates, y=vals, name=sid) )
 
         fig.update_layout(
             title='FRED Time Series',
