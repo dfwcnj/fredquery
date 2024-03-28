@@ -48,8 +48,6 @@ class FREDTags():
                                   file=sys.stderr)
             sys.exit()
         self.verbose = False
-        self.pause   = 2 # number of seconds to pause
-        self.retries = 5 # number of seconds to pause
         self.tid     = None
         self.sid     = None
         self.observationsdict = {}
@@ -99,15 +97,27 @@ class FREDTags():
                 self.reportobservation(id, units, obsa, odir)
                 time.sleep(1)
 
+    def returnseriesfortnm(self, tnm):
+        """ returnseriesfortnm(tnm)
+
+        return series for a tag name
+        tnm - tagname
+        """
+        if tnm in self.seriesdict.keys():
+            return self.seriesdict[tnm]
+        return None
+
     def returnseries(self):
-        saa=[]
+        """ returnseries()
+
+        return all series collected
+        """
+        saa = []
         for k in self.seriesdict.keys():
             aa =  self.seriesdict[k]
             if len(saa) == 0:
                 saa.append(aa[0])
-            saa.append(aa[1])
-        return saa
-
+            saa.extend(aa[1:])
 
     def showseries(self):
         """ showseries()
@@ -118,32 +128,26 @@ class FREDTags():
             self.ah.aashow(self.seriesdict[k],
                 'FRED Tagname %s series' % k)
 
+    def reportseriesfortnm(self, tnm, ofp):
+        """ reportseries - report series for a tagname
+        tnm - tagname
+        """
+        aa = self.returnseriesfortnm(tnm)
+        if not aa:
+            print('no series for tagname %s' % (tnm), file=sys.stderr)
+            return
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
+
+
     def reportseries(self, ofp):
         """ reportseries - report series for all collected
         """
-        hdr = []
-        for k in self.seriesdict.keys():
-            aa =  self.seriesdict[k]
-            for a in aa:
-                row = "','".join(a)
-                print("'%s'" % (row), file=ofp)
-
-    def getseriesforsid(self, sid):
-        """ getseriesforsid get series for a series_id
-            sid - series_id - required
-        """
-        if not sid:
-            print('getseriesfromsid: sid required', file=sys.stderr)
-            sys.exit(1)
-        self.sid = sid
-        url = '%s?series_id=%s&api_key=%s' % (self.surl, sid, self.api_key)
-        resp = self.uq.query(url)
-        rstr = resp.read().decode('utf-8')
-        aa = self.xa.xmlstr2aa(rstr)
-        if len(aa) == 0:
-            print('getseriesforrid(rid): no data' % (sid), file=sys.stderr)
-            return
-        self.seriesdict[sid] = aa
+        aa = self.returnseries()
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
 
     def getseriesfortnm(self, tnm):
         """ getseriesfortnm get series for a tag_id
@@ -160,7 +164,12 @@ class FREDTags():
         if len(aa) == 0:
             print('getseriesfortnm(tnm): no data' % (sid), file=sys.stderr)
             return
-        self.seriesdict[tnm] = aa
+        taa = []
+        for a in aa:
+            if 'DISCONTINUED' in a[3]:
+                continue
+            taa.append(a)
+        self.seriesdict[tnm] = taa
 
     def getseries(self):
         """ getseries get series for all tags collected
@@ -174,7 +183,7 @@ class FREDTags():
             time.sleep(1)
 
     def returntags(self):
-        taa = []
+        taa = []   # so I don't have to remember the one key
         for k in self.tagdict.keys():
             taa.extend(self.tagdict[k])
         return taa
@@ -276,12 +285,9 @@ def main():
         if args.showseries:
             ft.showseries()
             if fp != sys.stdout:
-                ft.reportseries(ofp=fp)
+                ft.reportseriesfortnm(tnm, ofp=fp)
         else:
-            ft.reportseries(ofp=fp)
-    elif args.series and args.seriesid:
-        ft.getseriesforsid(args.seriesid)
-        ft.reportseries(ofp=fp)
+            ft.reportseriesfortnm(tnm, ofp=fp)
     elif args.tags:
         ft.gettags()
         if args.showtags:

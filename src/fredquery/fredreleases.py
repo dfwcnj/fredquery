@@ -135,25 +135,6 @@ class FREDReleases():
             row = "','".join(a)
             print("'%s'" % (row), file=ofp)
 
-    def getseriesforsid(self, sid):
-        """ getseriesforsid(sid)
-
-        get a series for a series_id
-        sid - series_id - required
-        """
-        if not sid:
-            print('getseriesforsid: sid required', file=stderr)
-            sys.exit(1)
-        url = '%s?series_id=%s&api_key=%s' % (self.surl, sid,
-                                              self.api_key)
-        resp = self.uq.query(url)
-        rstr = resp.read().decode('utf-8')
-        aa = self.xa.xmlstr2aa(rstr)
-        if len(aa) == 0:
-            print('getseriesforsid(sid): no data' % (sid), file=sys.stderr)
-            return
-        self.seriesdict[sid] = aa
-
     def getseriesforrid(self, rid):
         """ getseriesforrid(rid)
 
@@ -172,12 +153,18 @@ class FREDReleases():
         if len(aa) == 0:
             print('getseriesforrid(rid): no data' % (sid), file=sys.stderr)
             return
-        aa[0].append('url')
+        assert aa[0][3] == 'title'
+        raa = []
+        raa.append(aa[0])
+        raa[0].append('url')
         for i in range(1, len(aa) ):
+            if 'DISCONTINUED' in aa[i][3]:
+                continue
+            raa.append(aa[i])
             url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.rsurl,
                      aa[i][0])
-            aa[i].append(url)
-        self.seriesdict[rid] = aa
+            raa[-1].append(url)
+        self.seriesdict[rid] = raa
 
     def getseries(self):
         """ getseries()
@@ -309,9 +296,6 @@ def main():
                 fr.reportseriesdorid(args.releaseid, ofp=fp)
         else:
                 fr.reportseriesdorid(args.releaseid, ofp=fp)
-    elif args.series and args.seriesid:
-        fr.getseriesforsid(sid=args.seriesid)
-        fr.reportseriesdorid(args.seriesid, ofp=fp)
     elif args.releases:
         fr.getreleases()
         if args.showreleases:

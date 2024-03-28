@@ -142,6 +142,8 @@ class FREDSeries():
         resp = self.uq.query(url)
         rstr = resp.read().decode('utf-8')
         aa = self.xa.xmlstr2aa(rstr)
+        if 'DISCONTINUED' in aa[1][3]:
+            return None
         return aa
 
 

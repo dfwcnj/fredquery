@@ -69,7 +69,7 @@ class FREDPlot():
         """
         fr = fredreleases.FREDReleases()
         fr.getseriesforrid(rid)
-        aa = fr.returnseriesforrid(catid)
+        aa = fr.returnseriesforid(rid)
         self.plotseries(aa, directory)
 
     def plotsourceid(self, sid, directory):
@@ -81,7 +81,7 @@ class FREDPlot():
         directory - where to store the html page
         """
         fs = fredsources.FREDSources()
-        fs.getseriesforcid(sid)
+        fs.getseriesforsid(sid)
         aa = fs.returnseriesforsid(sid)
         self.plotseries(aa, directory)
 
@@ -95,7 +95,7 @@ class FREDPlot():
         """
         ft = fredtags.FREDTags()
         ft.getseriesfortnm(tnm)
-        aa = self.fc.returnseriesfortnm(tnm)
+        aa = ft.returnseriesfortnm(tnm)
         self.plotseries(aa, directory)
 
 def main():

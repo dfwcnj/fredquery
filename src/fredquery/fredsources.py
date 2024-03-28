@@ -55,8 +55,6 @@ class FREDSources():
                                   file=sys.stderr)
             sys.exit()
         self.verbose = False
-        self.pause   = 2 # number of seconds to pause
-        self.retries = 5 # number of query retries
         self.sid     = None
         self.rid     = None
 
@@ -151,7 +149,31 @@ class FREDSources():
         if len(aa) == 0:
             print('getseriesforrid(rid): no data' % (sid), file=sys.stderr)
             return
-        self.seriesdict[rid] = aa
+        # eliminate discontinued series
+        raa = []
+        for i in range(len(aa) ):
+            if 'DISCONTINUED' in aa[i][3]:
+                continue
+            raa.append(aa[i])
+        self.seriesdict[rid] = raa
+
+    def returnseriesforsid(self, sid):
+        """ returnseriesforsid(sid)
+
+        get and return series for a source_id
+        sid source_id
+        """
+        self.getreleasesforsid(sid)
+        aa = self.releasedict[sid] 
+        saa = []          # releases array of arrays
+        for i in range(1, len(aa) ):
+            a = aa[i]     # data on a release
+            self.getseriesforrid(a[0])
+            raa = self.serieѕdict[a[0]]  # series for a release
+            if len(saa) == 0:
+                saa.append(raa[0])       # header
+            saa.extend(raa[1:])
+        return saa
 
     def getseries(self):
         """ getseries()
