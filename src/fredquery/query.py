@@ -27,7 +27,8 @@ class _URLQuery():
                 resp = urllib.request.urlopen(req)
                 return resp
             except urllib.error.URLError as e:
-                print("Error %s(%s): %s" % ('query', url, e.reason),
+                u = url.split('&')[0]
+                print("Error %s(%s): %s" % ('query', u, e.reason),
                 file=sys.stderr )
                 if tries < ntries:
                     print('retrying in %d seconds' % pause)

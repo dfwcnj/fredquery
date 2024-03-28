@@ -37,11 +37,11 @@ set -x
 
 fredsources --sources  --file /tmp/sources.csv
 fredsources --sources  --showsources
-fredsources --releases --sourceid 69 --file /tmp/sreleases69.csv
-fredsources --releases --sourceid 69 --showreleases
-fredsources --series --sourceid 69 --file /tmp/Source69Series.csv
-fredsources --series --sourceid 69 --showseries
-fredsources --observations --sourceid 69 --directory /tmp
+fredsources --releases --sourceid 57 --file /tmp/sreleases57.csv
+fredsources --releases --sourceid 57 --showreleases
+fredsources --series --sourceid 57 --file /tmp/Source57.csv
+fredsources --series --sourceid 57 --showseries
+fredsources --observations --sourceid 57 --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null
@@ -50,9 +50,9 @@ set -x
 
 fredtags --tags   --file /tmp/tags.csv
 fredtags --tags   --showtags
-fredtags --series --tagname price --file /tmp/tseriesprice.csv
-fredtags --series --tagname price --showseries
-fredtags --observations --tagname price --directory /tmp
+fredtags --series --tagname inflation --file /tmp/tseriesinflation.csv
+fredtags --series --tagname inflation --showseries
+fredtags --observations --tagname inflation --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null

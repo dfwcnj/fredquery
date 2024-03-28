@@ -81,7 +81,7 @@ class FREDPlot():
         directory - where to store the html page
         """
         fs = fredsources.FREDSources()
-        fs.getseriesforsid(sid)
+        fs.returnseriesforsid(sid)
         aa = fs.returnseriesforsid(sid)
         self.plotseries(aa, directory)
 

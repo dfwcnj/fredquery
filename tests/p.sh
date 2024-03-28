@@ -40,11 +40,11 @@ set -x
 
 python fredsources.py --sources  --file /tmp/sources.csv
 python fredsources.py --sources  --showsources
-python fredsources.py --releases --sourceid 69 --file /tmp/sreleases69.csv
-python fredsources.py --releases --sourceid 69 --showreleases
-python fredsources.py --series --sourceid 69 --file /tmp/Source69Series.csv
-python fredsources.py --series --sourceid 69 --showseries
-python fredsources.py --observations --sourceid 69 --directory /tmp
+python fredsources.py --releases --sourceid 57 --file /tmp/sreleases57.csv
+python fredsources.py --releases --sourceid 57 --showreleases
+python fredsources.py --series --sourceid 57 --file /tmp/Source57.csv
+python fredsources.py --series --sourceid 57 --showseries
+python fredsources.py --observations --sourceid 57 --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null
@@ -53,9 +53,9 @@ set -x
 
 python fredtags.py --tags   --file /tmp/tags.csv
 python fredtags.py --tags   --showtags
-python fredtags.py --series --tagname price --file /tmp/tseriesprice.csv
-python fredtags.py --series --tagname price --showseries
-python fredtags.py --observations --tagname price --directory /tmp
+python fredtags.py --series --tagname inflation --file /tmp/tseriesinflation.csv
+python fredtags.py --series --tagname inflation --showseries
+python fredtags.py --observations --tagname inflation --directory /tmp
 set +x
 ls /private/tmp/[0-9A-Z]*.csv | wc -l
 rm /private/tmp/[0-9A-Z]*.csv >/dev/null

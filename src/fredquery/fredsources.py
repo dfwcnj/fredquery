@@ -169,7 +169,7 @@ class FREDSources():
         for i in range(1, len(aa) ):
             a = aa[i]     # data on a release
             self.getseriesforrid(a[0])
-            raa = self.serieѕdict[a[0]]  # series for a release
+            raa = self.seriesdict[a[0]]  # series for a release
             if len(saa) == 0:
                 saa.append(raa[0])       # header
             saa.extend(raa[1:])
