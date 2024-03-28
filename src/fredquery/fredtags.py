@@ -285,9 +285,9 @@ def main():
         if args.showseries:
             ft.showseries()
             if fp != sys.stdout:
-                ft.reportseriesfortnm(tnm, ofp=fp)
+                ft.reportseriesfortnm(args.tagname, ofp=fp)
         else:
-            ft.reportseriesfortnm(tnm, ofp=fp)
+            ft.reportseriesfortnm(args.tagname, ofp=fp)
     elif args.tags:
         ft.gettags()
         if args.showtags:

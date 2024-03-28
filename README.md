@@ -23,6 +23,12 @@ example:
 From the output of this command you will be able to choose the time
 series observations that you wish to evaluate.
 </p>
+<p> This is a work in progress
+fredplotseries creates plots for a comma separated list of series_id.
+fredplot creates plots and descriptions for series related to
+categories, releases, sources, or tags. The descriptions are taken from
+the series data while the plots use the observation data
+</p>
 
 
 ## [Usage]
@@ -33,8 +39,8 @@ series observations that you wish to evaluate.
 ##<br/>
 usage: fredcategories [-h] [--categories] [--showcategories] [--series]<br/>
 [--showseries] [--observations]<br/>
-[--categoryid CATEGORYID] [--seriesid SERIESID]<br/>
-[--file FILE] [--directory DIRECTORY]<br/>
+[--categoryid CATEGORYID] [--file FILE]<br/>
+[--directory DIRECTORY]<br/>
 <br/>
 collect and report stlouisfed.org FRED categories and/or series<br/>
 <br/>
@@ -47,7 +53,6 @@ options:<br/>
 --observations        report timeseries data for categories<br/>
 --categoryid CATEGORYID<br/>
 categories are identified by category_id<br/>
---seriesid SERIESID   series are identified by series_id<br/>
 --file FILE           path to an output filename if just a filename and--<br/>
 directory is not provided the file is created in the<br/>
 current directory<br/>
