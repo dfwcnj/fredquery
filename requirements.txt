@@ -1,6 +1,4 @@
 #
 install_requires=[
-    'numpy',
-    'pandas',
     'plotly'
 ]

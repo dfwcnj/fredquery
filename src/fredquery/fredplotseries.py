@@ -7,8 +7,6 @@ import webbrowser
 
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
-import numpy as np
 
 try:
     from fredquery import fredseries
@@ -20,7 +18,6 @@ class FREDPlotSeries():
         """ create a plot with a list of FRED series_id's
         """
         # settings
-        pd.options.plotting.backend = "plotly"
 
         self.fs = fredseries.FREDSeries()
         self.seriesdict={}
