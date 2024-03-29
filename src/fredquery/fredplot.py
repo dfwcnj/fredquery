@@ -28,7 +28,7 @@ class FREDPlot():
         pass
 
 
-    def plotseries(self, aa, directory):
+    def plotseries(self, aa, hfn):
         """ plotseries(aa, directory)
 
         generate an html page with plots and notes abơut the plots
@@ -36,13 +36,15 @@ class FREDPlot():
         aa - array of arrays containing series information
         directory - where to store the html page
         """
+        fp = fredplotseries.FREDPlotSeries()
+
         ida = [aa[i][0] for i in range(1, len(aa))]
         idc = ','.join(ida)
-        fp = fredplotseries.FREDPlotSeries()
         fp.getserieslist(idc)
         fp.getobservationlist(idc)
+
         fp.composeunitseriesplotwnotes()
-        hfn = os.path.join(directory, 'plot.html')
+
         fp.saveplothtml(hfn)
         fp.showplothtml(hfn)
 
@@ -56,8 +58,11 @@ class FREDPlot():
         """
         fc = fredcategories.FREDCategories()
         fc.getseriesforcid(catid)
+
         aa = fc.returnseriesforcid(catid)
-        self.plotseries(aa, directory)
+
+        fn = os.path.join(directory, 'categoryid%s.html' % (catid) )
+        self.plotseries(aa, fn)
 
     def plotreleaseid(self, rid, directory):
         """ plotreleaseid(rid, directory)
@@ -69,8 +74,11 @@ class FREDPlot():
         """
         fr = fredreleases.FREDReleases()
         fr.getseriesforrid(rid)
+
         aa = fr.returnseriesforid(rid)
-        self.plotseries(aa, directory)
+
+        fn = os.path.join(directory, 'releaseidid%s.html' % (rid) )
+        self.plotseries(aa, fn)
 
     def plotsourceid(self, sid, directory):
         """ plotsourceid(sid, directory)
@@ -82,8 +90,11 @@ class FREDPlot():
         """
         fs = fredsources.FREDSources()
         fs.returnseriesforsid(sid)
+
         aa = fs.returnseriesforsid(sid)
-        self.plotseries(aa, directory)
+
+        fn = os.path.join(directory, 'sourceidid%s.html' % (sid) )
+        self.plotseries(aa, fn)
 
     def plottagname(self, tnm, directory):
         """ plottagname(tnm, directory)
@@ -95,8 +106,11 @@ class FREDPlot():
         """
         ft = fredtags.FREDTags()
         ft.getseriesfortnm(tnm)
+
         aa = ft.returnseriesfortnm(tnm)
-        self.plotseries(aa, directory)
+
+        fn = os.path.join(directory, 'tagname%s.html' % (tnm) )
+        self.plotseries(aa, fn)
 
 def main():
     argp = argparse.ArgumentParser(description='plot a set of St. Louis Fed FRED series')
