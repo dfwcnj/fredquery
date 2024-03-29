@@ -28,7 +28,7 @@ class FREDPlot():
         pass
 
 
-    def plotseries(self, aa, hfn):
+    def plotseries(self, aa, title, hfn):
         """ plotseries(aa, directory)
 
         generate an html page with plots and notes abơut the plots
@@ -43,7 +43,7 @@ class FREDPlot():
         fp.getserieslist(idc)
         fp.getobservationlist(idc)
 
-        fp.composeunitseriesplotwnotes()
+        fp.composeunitseriesplotwnotes(title)
 
         fp.saveplothtml(hfn)
         fp.showplothtml(hfn)
@@ -61,8 +61,9 @@ class FREDPlot():
 
         aa = fc.returnseriesforcid(catid)
 
+        title = 'FRED category_id %s Plots' % (catid)
         fn = os.path.join(directory, 'categoryid%s.html' % (catid) )
-        self.plotseries(aa, fn)
+        self.plotseries(aa, title, fn)
 
     def plotreleaseid(self, rid, directory):
         """ plotreleaseid(rid, directory)
@@ -77,8 +78,9 @@ class FREDPlot():
 
         aa = fr.returnseriesforid(rid)
 
+        title = 'FRED release_id %s Plots' % (rid)
         fn = os.path.join(directory, 'releaseidid%s.html' % (rid) )
-        self.plotseries(aa, fn)
+        self.plotseries(aa, title, fn)
 
     def plotsourceid(self, sid, directory):
         """ plotsourceid(sid, directory)
@@ -93,8 +95,9 @@ class FREDPlot():
 
         aa = fs.returnseriesforsid(sid)
 
+        title = 'FRED source_id %s Plots' % (sid)
         fn = os.path.join(directory, 'sourceidid%s.html' % (sid) )
-        self.plotseries(aa, fn)
+        self.plotseries(aa, title, fn)
 
     def plottagname(self, tnm, directory):
         """ plottagname(tnm, directory)
@@ -109,8 +112,9 @@ class FREDPlot():
 
         aa = ft.returnseriesfortnm(tnm)
 
+        title = 'FRED tagname %s Plots' % (tnm)
         fn = os.path.join(directory, 'tagname%s.html' % (tnm) )
-        self.plotseries(aa, fn)
+        self.plotseries(aa, title, fn)
 
 def main():
     argp = argparse.ArgumentParser(description='plot a set of St. Louis Fed FRED series')

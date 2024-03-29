@@ -5,7 +5,8 @@ import sys
 import argparse
 import webbrowser
 
-import plotly.express as px
+import plotly
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 try:
@@ -65,16 +66,18 @@ class FREDPlotSeries():
             self.getseries(sid)
 
     # https://plotly.com/python/multiple-axes/
-    def composeunitseriesplot(self, u):
+    def composeunitseriesplot(self, u, ptitle):
         """ composeunitseriesplot()
 
         compose plotly figure for later display with the series_id as
         the legend
         units - units of the observations
         """
-        fig = go.Figure()
+        #fig = go.Figure()
+        fig  = make_subplots(shared_yaxes=True, shared_xaxes=True)
 
         issecond=False
+
         for sid in self.unitseriesdict[u]:
             saa = self.unitseriesdict[u][sid]
             sid    = saa[1][0]
@@ -86,31 +89,31 @@ class FREDPlotSeries():
             dates = [oaa[i][2] for i in range(len(oaa) )]
             vals  = [oaa[i][3] for i in range(len(oaa) )]
 
-            fig.add_trace(
-                go.Scatter( x=dates, y=vals, name=sid),
-                secondary_y=issecond
-            )
+            fig.add_trace( go.Scatter( x=dates, y=vals, name=sid) )
+            #fig.add_trace( go.Scatter( x=dates, y=vals, name=sid),
+            #                          secondary_x=issecond)
             issecond=True
 
         fig.update_layout(
-            title='FRED Time Series',
+            title=ptitle,
             yaxis_title=units,
             xaxis_title='dates',
         )
         return fig
 
-    def composeunitseriesplotwnotes(self):
+    def composeunitseriesplotwnotes(self, title):
         """ composeunitseriesplotwnotes()
 
         compost plots with notes organized by units
         """
         htmla = []
         htmla.append('<html>')
-        htmla.append('<title>FRED Series Plot</title>')
+        if not title: title = 'FRED Series Plot'
+        htmla.append('<title>%s</title>' % (title) )
 
         for u in self.unitseriesdict.keys():
 
-            fig = self.composeunitseriesplot(u)
+            fig = self.composeunitseriesplot(u, title)
             fightml = fig.to_html()
             htmla.append(fightml)
 

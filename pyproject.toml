@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fredquery"
 dynamic = ["version"]
-description = 'Downloads various stlouisfed.org FRED files converting many to CSV files'
+description = 'Downloads various stlouisfed.org FRED files to CSV files and creates plots based on category, release, series, source, or tag'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
