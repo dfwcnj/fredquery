@@ -214,6 +214,7 @@ class FREDTags():
         aa[0].append('url')
         for i in range(1, len(aa) ):
             id = aa[i][0]
+            id = re.sub(' ', '+', id) # some environments don't like spaces
             url = '%s?series_id=%s&api_key=FRED_API_KEY' % (self.tsurl, id)
             aa[i].append(url)
         self.tagdict[0] = aa
@@ -268,6 +269,9 @@ def main():
                 sys.exit()
 
     ft = FREDTags()
+
+    if args.tagname:
+        args.tagname = re.sub(' ', '+', args.tagname)
 
     if args.observations:
         if not args.directory:
