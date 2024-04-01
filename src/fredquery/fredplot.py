@@ -1,6 +1,7 @@
 #! env python
 
 import os
+import re
 import sys
 import argparse
 import webbrowser
@@ -108,12 +109,14 @@ class FREDPlot():
         directory - where to store the html page
         """
         ft = fredtags.FREDTags()
-        ft.getseriesfortnm(tnm)
 
-        aa = ft.returnseriesfortnm(tnm)
+        tn = re.sub(' ', '+', tnm)
+        ft.getseriesfortnm(tn)
+
+        aa = ft.returnseriesfortnm(tn)
 
         title = 'FRED tagname %s Plots' % (tnm)
-        fn = os.path.join(directory, 'tagname%s.html' % (tnm) )
+        fn = os.path.join(directory, 'tagname%s.html' % (tn) )
         self.plotseries(aa, title, fn)
 
 def main():
