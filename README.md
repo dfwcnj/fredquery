@@ -37,10 +37,10 @@ the series data while the plots use the observation data
 ##<br/>
 ## fredcategories<br/>
 ##<br/>
-usage: fredcategories [-h] [--categories] [--showcategories] [--series]<br/>
-[--showseries] [--observations]<br/>
-[--categoryid CATEGORYID] [--file FILE]<br/>
-[--directory DIRECTORY]<br/>
+usage: fredcategories [-h] [--categories] [--showcategories] [--children]<br/>
+[--showchildren] [--series] [--showseries]<br/>
+[--observations] [--categoryid CATEGORYID]<br/>
+[--file FILE] [--directory DIRECTORY]<br/>
 <br/>
 collect and report stlouisfed.org FRED categories and/or series<br/>
 <br/>
@@ -48,6 +48,8 @@ options:<br/>
 -h, --help            show this help message and exit<br/>
 --categories          report category data<br/>
 --showcategories      show categories in your browser<br/>
+--children            report category child data<br/>
+--showchildren        show children of a category in your browser<br/>
 --series              report series urls for categories collected<br/>
 --showseries          show series for a category in your browser<br/>
 --observations        report timeseries data for categories<br/>

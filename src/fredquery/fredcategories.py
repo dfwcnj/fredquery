@@ -34,6 +34,7 @@ class FREDCategories():
         self.cid = None
         self.curl = 'https://fred.stlouisfed.org/categories'
         self.acurl = 'https://api.stlouisfed.org/fred/category'
+        self.ccurl = 'https://api.stlouisfed.org/fred/category/children'
         self.csurl = 'https://api.stlouisfed.org/fred/category/series'
         self.ssurl = 'https://api.stlouisfed.org/fred/series'
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
@@ -49,6 +50,7 @@ class FREDCategories():
         self.npages  = 7
         self.verbose = False
         self.categorydict= {}
+        self.catchilddict= {}
         self.seriesdict = {}
         self.observationsdict = {}
 
@@ -107,7 +109,8 @@ class FREDCategories():
         """ reportseries(ofp)
 
         report series data for categories
-        rstr - decoded response of a urllib request
+        id - category_id
+        ofp - output file pointer
         """
         aa = self.seriesdict[id]
         for a in aa:
@@ -160,6 +163,60 @@ class FREDCategories():
                 a = aa[i]
                 cid = a[0]
                 self.getseriesforcid(cid)
+
+    def showchildrenforcid(self, cid):
+        """ showchildrenforcid(cid)
+
+        show the children categories for a category_id in your browser
+        cid - category_id
+        """
+        if cid not in self.catchilddict:
+            print('no data for category_id %s' % (cid), file=sys.stderr )
+            return
+        self.ah.aashow(self.catchilddict[cid], 'Category %s children' % cid)
+
+    def reportchildrenforcid(self, cid, ofp):
+        """ reportchildrenforcid(ofp)
+
+        report child data for categories
+        id - category_id
+        ofp - output file pointer
+        """
+        aa = self.catchilddict[cid]
+        for a in aa:
+            row = "','".join(a)
+            print("'%s'" % (row), file=ofp)
+
+    def returnchildrenforcid(self, cid):
+        if cid in self.catchilddict:
+            return self.catchilddict[cid]
+        return None
+
+    def getcategorychilddata(self, cid, rstr):
+        """ getcategorychilddata(cid, rstr)
+
+        get child data for a category_id
+        cid - category_id
+        rstr - url request query string
+        """
+        aa = self.xa.xmlstr2aa(rstr)
+        if len(aa) == 0:
+            print('getcategorychilddata(%s): no data' % (cid), file=sys.stderr)
+            return
+        self.catchilddict[cid] = aa
+
+    def getchildrenforcid(self, cid):
+        """ getchildrenforcid(cid)
+
+        get the child categories for a category_id
+        cid - category_id
+        """
+        url = '%s?category_id=%s&api_key=%s' % (self.ccurl, cid,
+              self.api_key)
+        resp = self.uq.query(url)
+        rstr = resp.read().decode('utf-8')
+        # print(rstr, file=sys.stderr)
+        self.getcategorychilddata(cid, rstr)
 
     def returncategories(self):
         cata = []
@@ -269,6 +326,10 @@ def main():
                        help="report category data")
     argp.add_argument('--showcategories', action='store_true', default=False,
                        help="show categories in your browser")
+    argp.add_argument('--children', action='store_true', default=False,
+                       help="report category child data")
+    argp.add_argument('--showchildren', action='store_true', default=False,
+                       help="show children of a category  in your browser")
     argp.add_argument('--series', action='store_true', default=False,
                        help="report series urls for categories collected")
     argp.add_argument('--showseries', action='store_true', default=False,
@@ -288,7 +349,8 @@ def main():
 
     args = argp.parse_args()
 
-    if not args.categories and not args.series and not args.observations:
+    if not args.categories and not args.children and \
+       not args.series and not args.observations:
         argp.print_help()
         sys.exit()
 
@@ -321,6 +383,14 @@ def main():
             fc.getcategories()
             fc.getseries()
             fc.getandreportobservations(odir=args.directory)
+    elif args.children and args.categoryid:
+        fc.getchildrenforcid(args.categoryid)
+        if args.showchildren:
+            fc.showchildrenforcid(args.categoryid)
+            if fp != sys.stdout:
+                fc.reportchildrenforcid(args.categoryid, ofp=fp)
+        else:
+            fc.reportchildrenforcid(args.categoryid, ofp=fp)
     elif args.series and args.categoryid:
         fc.getseriesforcid(cid=args.categoryid)
         if args.showseries:
