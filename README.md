@@ -131,10 +131,8 @@ plot a set of St. Louis Fed FRED series<br/>
 <br/>
 options:<br/>
 -h, --help            show this help message and exit<br/>
---categoryid CATEGORYID<br/>
-FRED category_id<br/>
---releaseid RELEASEID<br/>
-FRED release_id<br/>
+--categoryid CATEGORYID FRED category_id<br/>
+--releaseid RELEASEID FRED release_id<br/>
 --sourceid SOURCEID   FRED source_id<br/>
 --tagname TAGNAME     FRED tagname<br/>
 --directory DIRECTORY<br/>
@@ -150,8 +148,7 @@ plot a series list<br/>
 <br/>
 options:<br/>
 -h, --help            show this help message and exit<br/>
---serieslist SERIESLIST<br/>
-comma separated list of FRED series_id's<br/>
+--serieslist SERIESLIST comma separated list of FRED series_id's<br/>
 --htmlfile HTMLFILE   path to file that will contain the plot<br/>
 <br/>
 <br/>
