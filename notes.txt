@@ -20,8 +20,9 @@ https://fredblog.stlouisfed.org/2023/10/credit-card-holders-and-their-credit-sco
 https://research.stlouisfed.org/publications/
 https://research.stlouisfed.org/publications/economic-synopses/2023/11/24/developments-in-household-liabilities-since-the-1990s
 
-get releases
-get series for release
+# FRED data download
+https://fred.stlouisfed.org/collection/federal-reserve-board-data
+https://www.federalreserve.gov/datadownload/
 
 https://fred.stlouisfed.org/
 https://fred.stlouisfed.org/docs/api/fred/overview.html
