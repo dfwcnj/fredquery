@@ -24,6 +24,7 @@ class FREDPlotSeries():
         self.seriesdict={}
         self.observationsdict={}
         self.unitseriesdict = {}  # [units][sid]
+        self.unitfreqseriesdict = {} # [units][freq][sid]
         self.html = None
 
         self.df = None
@@ -50,10 +51,20 @@ class FREDPlotSeries():
         sid - FRED series_id
         """
         aa = self.fs.returnseriesforsid(sid)
+        freq = aa[1][6]
         units = aa[1][8]
-        if units not in self.unitseriesdict.keys():
-            self.unitseriesdict[units]={}
-        self.unitseriesdict[units][sid] = aa
+
+        # XXX old
+        #if units not in self.unitseriesdict.keys():
+        #    self.unitseriesdict[units]={}
+        #self.unitseriesdict[units][sid] = aa
+
+        # XXX new
+        if units not in self.unitfreqseriesdict.keys():
+            self.unitfreqseriesdict[units]={}
+        if freq not in self.unitfreqseriesdict[units]:
+            self.unitfreqseriesdict[units][freq]={}
+        self.unitfreqseriesdict[units][freq][sid] = aa
 
     def getserieslist(self, slist):
         """ getserieslist(slist)
@@ -64,6 +75,91 @@ class FREDPlotSeries():
         sa = slist.split(',')
         for sid in sa:
             self.getseries(sid)
+
+    # https://plotly.com/python/multiple-axes/
+    def composeunitfreqseriesplot(self, u, f, ptitle):
+        """ composeunitfreqseriesplot(u, f)
+
+        compose plotly figure for later display with the series_id as
+        the legend
+        u - units of the observations
+        f - observationfrequency
+        """
+        #fig = go.Figure()
+        fig  = make_subplots(shared_yaxes=True, shared_xaxes=True)
+
+        issecond=False
+
+        for sid in self.unitfreqseriesdict[u][f]:
+            saa = self.unitfreqseriesdict[u][f][sid]
+            sid    = saa[1][0]
+            stitle = saa[1][3]
+            freq   = saa[1][6]
+            units  = saa[1][8]
+
+            oaa = self.observationsdict[sid]
+
+            dates = [oaa[i][2] for i in range(len(oaa) )]
+            vals  = [oaa[i][3] for i in range(len(oaa) )]
+
+            fig.add_trace( go.Scatter( x=dates, y=vals, name=sid) )
+            #fig.add_trace( go.Scatter( x=dates, y=vals, name=sid),
+            #                          secondary_x=issecond)
+            issecond=True
+
+        fig.update_layout(
+            title=ptitle,
+            yaxis_title=units,
+            xaxis_title='dates',
+        )
+        return fig
+
+    def composeunitfreqseriesplotwnotes(self, title):
+        """ composeunitfreqseriesplotwnotes(title)
+
+        compost plots with notes organized by units
+        title - title for the web page
+        """
+        htmla = []
+        htmla.append('<html>')
+        if not title: title = 'FRED Series Plot'
+        htmla.append('<title>%s</title>' % (title) )
+
+        for u in self.unitfreqseriesdict.keys():
+            for f in self.unitfreqseriesdict[u].keys():
+
+                fig = self.composeunitfreqseriesplot(u, f, title)
+                fightml = fig.to_html()
+                htmla.append(fightml)
+
+                for sid in self.unitfreqseriesdict[u][f].keys():
+                    saa = self.unitfreqseriesdict[u][f][sid]
+                    sid=saa[1][0]
+                    stitle=saa[1][3]
+
+                    htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
+
+                    # header
+                    htmla.append('<table border="1">')
+                    hrowa = [saa[0][i] for i in range(len(saa[0])-1) if i != 3]
+                    hrow = '</th><th>'.join(hrowa)
+                    htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
+
+                    # data
+                    drowa = [saa[1][i] for i in range(len(saa[1])-1) if i != 3]
+                    drow = '</td><td>'.join(drowa)
+                    htmla.append('<tr>%s</tr>' % (''.join(drow)) )
+                    htmla.append('</table>')
+
+                    # notes
+                    htmla.append('<p>')
+                    htmla.append('%s: %s' % (saa[0][-1], saa[1][-1]) )
+                    htmla.append('</p>')
+
+        htmla.append('</html>')
+
+        self.html = ''.join(htmla)
+        return self.html
 
     # https://plotly.com/python/multiple-axes/
     def composeunitseriesplot(self, u, ptitle):
@@ -179,7 +275,8 @@ def main():
     PS.getserieslist(args.serieslist)
     PS.getobservationlist(args.serieslist)
 
-    PS.composeunitseriesplotwnotes()
+    #PS.composeunitseriesplotwnotes()
+    PS.composeunitfreqseriesplotwnotes()
 
     PS.saveplothtml(args.htmlfile)
     PS.showplothtml(args.htmlfile)
