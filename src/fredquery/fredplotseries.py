@@ -23,7 +23,6 @@ class FREDPlotSeries():
         self.fs = fredseries.FREDSeries()
         self.seriesdict={}
         self.observationsdict={}
-        self.unitseriesdict = {}  # [units][sid]
         self.unitfreqseriesdict = {} # [units][freq][sid]
         self.html = None
 
@@ -54,12 +53,6 @@ class FREDPlotSeries():
         freq = aa[1][6]
         units = aa[1][8]
 
-        # XXX old
-        #if units not in self.unitseriesdict.keys():
-        #    self.unitseriesdict[units]={}
-        #self.unitseriesdict[units][sid] = aa
-
-        # XXX new
         if units not in self.unitfreqseriesdict.keys():
             self.unitfreqseriesdict[units]={}
         if freq not in self.unitfreqseriesdict[units]:
@@ -161,87 +154,6 @@ class FREDPlotSeries():
         self.html = ''.join(htmla)
         return self.html
 
-    # https://plotly.com/python/multiple-axes/
-    def composeunitseriesplot(self, u, ptitle):
-        """ composeunitseriesplot()
-
-        compose plotly figure for later display with the series_id as
-        the legend
-        units - units of the observations
-        """
-        #fig = go.Figure()
-        fig  = make_subplots(shared_yaxes=True, shared_xaxes=True)
-
-        issecond=False
-
-        for sid in self.unitseriesdict[u]:
-            saa = self.unitseriesdict[u][sid]
-            sid    = saa[1][0]
-            stitle = saa[1][3]
-            units  = saa[1][8]
-
-            oaa = self.observationsdict[sid]
-
-            dates = [oaa[i][2] for i in range(len(oaa) )]
-            vals  = [oaa[i][3] for i in range(len(oaa) )]
-
-            fig.add_trace( go.Scatter( x=dates, y=vals, name=sid) )
-            #fig.add_trace( go.Scatter( x=dates, y=vals, name=sid),
-            #                          secondary_x=issecond)
-            issecond=True
-
-        fig.update_layout(
-            title=ptitle,
-            yaxis_title=units,
-            xaxis_title='dates',
-        )
-        return fig
-
-    def composeunitseriesplotwnotes(self, title):
-        """ composeunitseriesplotwnotes()
-
-        compost plots with notes organized by units
-        """
-        htmla = []
-        htmla.append('<html>')
-        if not title: title = 'FRED Series Plot'
-        htmla.append('<title>%s</title>' % (title) )
-
-        for u in self.unitseriesdict.keys():
-
-            fig = self.composeunitseriesplot(u, title)
-            fightml = fig.to_html()
-            htmla.append(fightml)
-
-            for sid in self.unitseriesdict[u].keys():
-                saa = self.unitseriesdict[u][sid]
-                sid=saa[1][0]
-                stitle=saa[1][3]
-
-                htmla.append('<h3>%s:  %s</h3>' % (sid, stitle) )
-
-                # header
-                htmla.append('<table border="1">')
-                hrowa = [saa[0][i] for i in range(len(saa[0])-1) if i != 3]
-                hrow = '</th><th>'.join(hrowa)
-                htmla.append('<tr>%s</tr>' % (''.join(hrow)) )
-
-                # data
-                drowa = [saa[1][i] for i in range(len(saa[1])-1) if i != 3]
-                drow = '</td><td>'.join(drowa)
-                htmla.append('<tr>%s</tr>' % (''.join(drow)) )
-                htmla.append('</table>')
-
-                # notes
-                htmla.append('<p>')
-                htmla.append('%s: %s' % (saa[0][-1], saa[1][-1]) )
-                htmla.append('</p>')
-
-        htmla.append('</html>')
-
-        self.html = ''.join(htmla)
-        return self.html
-
     def saveplothtml(self, fn):
         """ saveplothtml(fn)
 
@@ -275,7 +187,6 @@ def main():
     PS.getserieslist(args.serieslist)
     PS.getobservationlist(args.serieslist)
 
-    #PS.composeunitseriesplotwnotes()
     PS.composeunitfreqseriesplotwnotes()
 
     PS.saveplothtml(args.htmlfile)

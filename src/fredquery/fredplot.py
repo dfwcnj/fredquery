@@ -44,7 +44,6 @@ class FREDPlot():
         fp.getserieslist(idc)
         fp.getobservationlist(idc)
 
-        #fp.composeunitseriesplotwnotes(title)
         fp.composeunitfreqseriesplotwnotes(title)
 
         fp.saveplothtml(hfn)
