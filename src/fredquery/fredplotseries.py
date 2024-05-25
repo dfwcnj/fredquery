@@ -116,14 +116,25 @@ class FREDPlotSeries():
         htmla = []
         htmla.append('<html>')
         if not title: title = 'FRED Series Plot'
+        htmla.append('<head>')
         htmla.append('<title>%s</title>' % (title) )
+        htmla.append('<script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>')
+        htmla.append('</head>')
 
+        ua = [k for k in self.unitfreqseriesdict.keys()]
         for u in self.unitfreqseriesdict.keys():
+            fa = [k for k in self.unitfreqseriesdict[u].keys()]
             for f in self.unitfreqseriesdict[u].keys():
 
                 fig = self.composeunitfreqseriesplot(u, f, title)
-                fightml = fig.to_html()
-                htmla.append(fightml)
+
+                figjs = fig.to_json()
+                htmla.append('<div id="fig%s%s">' % ( u, f) )
+                htmla.append('<script>')
+                htmla.append('var figobj = %s;\n' % figjs)
+                htmla.append('Plotly.newPlot("fig%s%s", figobj.data, figobj.layout, {});' % (u,f) )
+                htmla.append('</script>')
+                htmla.append('</div>')
 
                 for sid in self.unitfreqseriesdict[u][f].keys():
                     saa = self.unitfreqseriesdict[u][f][sid]
