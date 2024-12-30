@@ -110,7 +110,8 @@ class FREDSources():
             aa = self.seriesdict[id]
             if len(saa) == 0:
                 saa.append(aa[0])
-            saa.append(aa[1])
+            if len(aa) != 1:
+                saa.extend(aa[1:])
         return saa
 
     def showseries(self):
