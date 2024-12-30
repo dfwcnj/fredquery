@@ -11,6 +11,7 @@ import re
 import time
 import urllib.request
 import xml
+import webbrowser
 
 try:
     from fredquery import query
@@ -33,18 +34,23 @@ class FREDSources():
         self.surl = 'https://api.stlouisfed.org/fred/sources'
         self.osurl = 'https://api.stlouisfed.org/fred/source'
         self.sourcedict = {}
+
         # releases for a source_id
         self.srurl = 'https://api.stlouisfed.org/fred/source/releases'
         self.releasedict = {}
         self.rurl = 'https://api.stlouisfed.org/fred/releases'
+
         # series for a release id
         self.rsurl = 'https://api.stlouisfed.org/fred/release/series'
         self.seriesdict = {}
+
         # observations for a series id
         self.sourl = 'https://api.stlouisfed.org/fred/series/observations'
         self.observationsdict = {}
+
         # url for getting a FRED api_key
         self.kurl = 'https://fred.stlouisfed.org/docs/api/api_key.html'
+
         # probably a bad idea to put your real api_key in a report
         self.rapi_key = '$FRED_API_KEY'
         if 'FRED_API_KEY' in os.environ:
@@ -104,6 +110,15 @@ class FREDSources():
                 self.reportobservation(sid, units, oaa, odir)
                 time.sleep(1)
 
+    def returnseriestables(self):
+        tblas = []
+        for id in self.seriesdict.keys():
+            aa = self.seriesdict[id]
+            cap = 'Series for ReleaseId %s' % id
+            tbla = self.ah.aa2table(cap, aa)
+            tblas.extend(tbla)
+        return tblas
+
     def returnseries(self):
         saa = []
         for id in self.seriesdict.keys():
@@ -113,6 +128,23 @@ class FREDSources():
             if len(aa) != 1:
                 saa.extend(aa[1:])
         return saa
+
+    def showseriestables(self):
+        tblas = self.returnseriestables()
+
+        htmla = []
+        htmla.append('<html>')
+        name = 'Source ID %s' % self.sid
+        htmla.append('<h1 style="text-align:center">%s</h1>' % (name) )
+        #htmla.append('<titla>Source ID %s</title>' % self.sid)
+        #htmla.append('<h1 style="text-align:center">%s</h1>' % (self.sid) )
+        htmla.extend(tblas)
+        htmla.append('</html>')
+
+        fn = os.path.join('/tmp', 'source%s.html' % self.sid)
+        with open(fn, 'w') as fp:
+            fp.write(''.join(htmla))
+        webbrowser.open('file://%s' % fn)
 
     def showseries(self):
         """ showseries()
@@ -353,7 +385,7 @@ def main():
         fs.getreleasesforsid(args.sourceid)
         fs.getseries()
         if args.showseries:
-            fs.showseries()
+            fs.showseriestables()
             if fp != sys.stdout:
                 fs.reportseries(fp)
         else:

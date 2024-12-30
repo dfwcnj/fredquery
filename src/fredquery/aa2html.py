@@ -8,7 +8,7 @@ class _AA2HTML():
     def __init__(self):
         self.htmla = []
 
-    def aa2table(self, aa):
+    def aa2table(self, cap, aa):
        """ aa2table(aa)
 
        convert array of arrays to an html table
@@ -21,6 +21,8 @@ class _AA2HTML():
        hdra = aa[0]
        hdr = '</th><th>'.join(hdra)
        tbla.append('<tr><th>%s</th></tr>' % (hdr) )
+       cap = '<caption>%s</caption>' % cap
+       tbla.append(cap)
        # table rows
        for i in range(1, len(aa) ):
            rowa = aa[i]
@@ -61,7 +63,7 @@ class _AA2HTML():
            self.htmla.append('<title>%s</title>' % (name) )
            self.htmla.append('<h1 style="text-align:center">%s</h1>' % (name) )
 
-       self.htmla.append(self.aa2table(aa) )
+       self.htmla.append(self.aa2table(name, aa) )
        ## table
        #self.htmla.append('<table border="1">')
        ## table header
